@@ -1,0 +1,31 @@
+{
+  "name": "cse_project",
+  "version": "1.0.0",
+  "description": "Proyecto para manejo de API con manejador de sesiones",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/index.js"
+  },
+  "keywords": [
+    "nodejs",
+    "sqlite3",
+    "express",
+    "backend"
+  ],
+  "author": "cse",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "prettier": "^3.4.2"
+  },
+  "dependencies": {
+    "@mhoc/axios-digest-auth": "^0.8.0",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "sharp": "^0.33.5",
+    "sqlite3": "^5.1.7"
+  }
+}
