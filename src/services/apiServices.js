@@ -54,7 +54,67 @@ const apiService = {
         console.error('Error en POST:', error);
         throw error;
       }
-  }
+  },
+
+  put: async (url, username, password, jsonData = {}) => {
+    try {
+        const initialResponse = await axios.put(url, jsonData, {
+            headers:{
+                'Content-Type': 'application/json'
+            },
+            validateStatus: false
+        });
+  
+        if (initialResponse.status !== 401 || !initialResponse.headers['www-authenticate']) {
+          throw new Error('Failed to retrieve www-authenticate header');
+        }
+  
+        const authHeader = generateDigestAuthHeader('PUT', url, username, password, initialResponse.headers['www-authenticate']);
+        
+        const response = await axios.put(url, jsonData, {
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json'
+          },
+        });
+  
+        return response.data;
+      } catch (error) {
+        console.error('Error en PUT:', error);
+        throw error;
+      }
+  },
+
+  delete: async (url, username, password, jsonData = {}) => {
+    try {
+        const initialResponse = await axios.delete(url, {
+            data: jsonData,
+            headers:{
+                'Content-Type': 'application/json'
+            },
+            validateStatus: false
+        });
+  
+        if (initialResponse.status !== 401 || !initialResponse.headers['www-authenticate']) {
+          throw new Error('Failed to retrieve www-authenticate header');
+        }
+  
+        const authHeader = generateDigestAuthHeader('DELETE', url, username, password, initialResponse.headers['www-authenticate']);
+        
+        const response = await axios.delete(url, {
+          data: jsonData,
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json'
+          },
+        });
+  
+        return response.data;
+      } catch (error) {
+        console.error('Error en DELETE:', error);
+        throw error;
+      }
+  },
 };
 
 const apiServiceImage = {
