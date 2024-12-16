@@ -4,6 +4,11 @@ const getUserCardId = async (req, res) => {
   try {
     const { API_URL_GET_CARD_ID, API_USERNAME, API_PASSWORD } = process.env;
     const data = await apiService.get(API_URL_GET_CARD_ID, API_USERNAME, API_PASSWORD);
+
+    const cardNumber = data.CardInfo.cardNo;
+
+    console.info(' Tarjeta número:', cardNumber, 'obtenida satisfactoriamente. \n', JSON.stringify(data, null, 2));
+
     res.json(data);
   } catch (error) {
     res.status(500).send('Error al obtener el registro de tarjeta');
@@ -13,9 +18,6 @@ const getUserCardId = async (req, res) => {
 const deleteUsercard = async (req, res) => {
   try {
     const { employeeNo } = req.body;
-    if (!employeeNo) {
-      return res.status(400).send('Parametro employeeNo es requerido');
-    }
 
     const { API_URL_DELETE_CARD, API_USERNAME, API_PASSWORD } = process.env;
     const jsonData = {
@@ -27,6 +29,7 @@ const deleteUsercard = async (req, res) => {
     };
 
     const data = await apiService.put(API_URL_DELETE_CARD, API_USERNAME, API_PASSWORD, jsonData);
+    console.info(' Tarjeta número:', employeeNo, 'eliminada satisfactoriamente. \n', JSON.stringify(data, null, 2));
     res.json(data);
   } catch (error) {
     console.error(error);
