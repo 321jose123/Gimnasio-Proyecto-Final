@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { ValidateCardIdDelete } = require('../middlewares/validators/users.validators');
+const { ValidateCardIdDelete, validateFingerprint } = require('../middlewares/validators/users.validators');
 
 const {getUserCapabilities} = require('../controllers/users/userCapabilities.controller');
 const {getChannelPicture} = require('../controllers/face/faceCaptureImage.controller');
@@ -12,7 +12,7 @@ const {deleteUsercard} = require('../controllers/cards/card.controller');
 router.get('/user/capabilities', getUserCapabilities);
 // router.get('/channel/picture', getChannelPicture);
 router.get('/user/getcardid', getUserCardId)
-router.post('/user/fingerprint', postUserFingerprint);
+router.post('/user/fingerprint', validateFingerprint, postUserFingerprint);
 router.put('/user/deleteusercard', ValidateCardIdDelete ,deleteUsercard);
 
 module.exports = router;

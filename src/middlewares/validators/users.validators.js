@@ -16,6 +16,21 @@ const  ValidateCardIdDelete = [
     }
 ]
 
+const validateFingerprint = [
+    check('fingerNo')
+    .exists()
+    .not()
+    .isEmpty()
+    .withMessage('fingerNo es requerido')
+    .isNumeric()
+    .withMessage('fingerNo debe ser un numero')
+    .isLength({ min: 1, max: 5 })
+    .withMessage('fingerNo debe tener entre 1 y 5 caracteres'),
+    (req, res, next) => {
+        validateResult(req, res, next);
+    }
+]
 module.exports = {
-    ValidateCardIdDelete
+    ValidateCardIdDelete,
+    validateFingerprint
 }
