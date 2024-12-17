@@ -27,11 +27,14 @@ const apiService = {
   },
 
   // TODO: DEMÁS METODOS
-  post: async (url, username, password, xmlData = {}) => {
+  post: async (url, username, password, dataParse, contentType = {}) => {
+
+    console.log("POST", url, username, password, dataParse, contentType);
+
     try {
-        const initialResponse = await axios.post(url, xmlData, {
+        const initialResponse = await axios.post(url, dataParse, {
             headers:{
-                'Content-Type': 'application/xml'
+                'Content-Type': contentType || 'application/json'
             },
             validateStatus: false
         });
@@ -42,10 +45,10 @@ const apiService = {
   
         const authHeader = generateDigestAuthHeader('POST', url, username, password, initialResponse.headers['www-authenticate']);
         
-        const response = await axios.post(url, xmlData, {
+        const response = await axios.post(url, dataParse, {
           headers: {
             'Authorization': authHeader,
-            'Content-Type': 'application/xml'
+            'Content-Type': contentType
           },
         });
   

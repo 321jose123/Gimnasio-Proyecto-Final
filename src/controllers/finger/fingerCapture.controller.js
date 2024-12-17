@@ -1,18 +1,19 @@
 const { apiService } = require('../../services/apiServices');
 const { convertXmlToJson } = require('../../utils/xlmToJson');
+const { API_URL_POST_FINGERPRINT } = require('../../../config')
 
 const postUserFingerprint = async (req, res) => {
   const { fingerNo } = req.body;
-  
-  try {
-    const { API_URL_POST_FINGERPRINT, API_USERNAME, API_PASSWORD } = process.env;
 
-    const xmlData = `<?xml version="1.0" encoding="UTF-8"?>
+  try {
+    const { API_USERNAME, API_PASSWORD } = process.env;
+
+    const dataParse = `<?xml version="1.0" encoding="UTF-8"?>
       <CaptureFingerPrintCond version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
         <fingerNo>${fingerNo}</fingerNo>
       </CaptureFingerPrintCond>`;
 
-    const data = await apiService.post(API_URL_POST_FINGERPRINT, API_USERNAME, API_PASSWORD, xmlData);
+    const data = await apiService.post(API_URL_POST_FINGERPRINT, API_USERNAME, API_PASSWORD, dataParse, contentType = 'application/xml');
 
     const jsonResponse = await convertXmlToJson(data);
 

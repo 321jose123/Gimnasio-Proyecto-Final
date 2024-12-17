@@ -1,16 +1,52 @@
 const { check } = require('express-validator');
 const { validateResult } = require('../../helpers/validate.helpers')
 
+const validateCardAddToUser = [
+    check('employeeNo')
+        .exists().withMessage('employeeNo es requerido')
+        .not().isEmpty().withMessage('employeeNo no debe estar vacío')
+        .isNumeric().withMessage('employeeNo debe ser un número')
+        .isLength({ min: 1, max: 8 }).withMessage('employeeNo debe tener entre 1 y 8 caracteres'),
+
+    check('cardNo')
+        .exists().withMessage('cardNo es requerido')
+        .not().isEmpty().withMessage('cardNo no debe estar vacío')
+        .isNumeric().withMessage('cardNo debe ser un número'),
+
+    check('deleteCard')
+        .exists().withMessage('deleteCard es requerido')
+        .isBoolean().withMessage('deleteCard debe ser un booleano'),
+
+    check('cardType')
+        .exists().withMessage('cardType es requerido')
+        .not().isEmpty().withMessage('cardType no debe estar vacío')
+        .isString().withMessage('cardType debe ser una cadena')
+        .isIn(['normalCard', 'patrolCard', 'hijackCard', 'superCard', 'dismissingCard', 'emergencyCard'])
+        .withMessage('cardType debe ser uno de los siguientes: normalCard, patrolCard, hijackCard, superCard, dismissingCard, emergencyCard'),
+
+    check('checkCardNo')
+        .exists().withMessage('checkCardNo es requerido')
+        .isBoolean().withMessage('checkCardNo debe ser un booleano'),
+
+    check('checkEmployeeNo')
+        .exists().withMessage('checkEmployeeNo es requerido')
+        .isBoolean().withMessage('checkEmployeeNo debe ser un booleano'),
+
+    check('addCard')
+        .exists().withMessage('addCard es requerido')
+        .isBoolean().withMessage('addCard debe ser un booleano'),
+
+    (req, res, next) => {
+        validateResult(req, res, next);
+    }
+];
+
 const  ValidateCardIdDelete = [
     check('employeeNo')
-    .exists()
-    .not()
-    .isEmpty()
-    .withMessage('employeeNo es requerido')
-    .isNumeric()
-    .withMessage('employeeNo debe ser un numero')
-    .isLength({ min: 1, max: 8 })
-    .withMessage('employeeNo debe tener entre 1 y 8 caracteres'),
+        .exists().withMessage('employeeNo es requerido')
+        .not().isEmpty().withMessage('employeeNo no debe estar vacío')
+        .isNumeric().withMessage('employeeNo debe ser un número')
+        .isLength({ min: 1, max: 8 }).withMessage('employeeNo debe tener entre 1 y 8 caracteres'),
     (req, res, next) => {
         validateResult(req, res, next);
     }
@@ -18,19 +54,16 @@ const  ValidateCardIdDelete = [
 
 const validateFingerprint = [
     check('fingerNo')
-    .exists()
-    .not()
-    .isEmpty()
-    .withMessage('fingerNo es requerido')
-    .isNumeric()
-    .withMessage('fingerNo debe ser un numero')
-    .isLength({ min: 1, max: 5 })
-    .withMessage('fingerNo debe tener entre 1 y 5 caracteres'),
+        .exists().withMessage('fingerNo es requerido')
+        .not().isEmpty().withMessage('fingerNo no debe estar vacío')
+        .isNumeric().withMessage('fingerNo debe ser un número')
+        .isLength({ min: 1, max: 5 }).withMessage('fingerNo debe tener entre 1 y 5 caracteres'),
     (req, res, next) => {
         validateResult(req, res, next);
     }
 ]
 module.exports = {
     ValidateCardIdDelete,
-    validateFingerprint
+    validateFingerprint,
+    validateCardAddToUser
 }
