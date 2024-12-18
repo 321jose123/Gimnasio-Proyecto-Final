@@ -41,6 +41,28 @@ const validateCardAddToUser = [
     }
 ];
 
+const validateCardIdFromUser = [
+    check('searchResultPosition')
+        .exists().withMessage('searchResultPosition es requerido')
+        .not().isEmpty().withMessage('searchResultPosition no debe estar vacío')
+        .isNumeric().withMessage('searchResultPosition debe ser un número'),
+
+    check('maxResults')
+        .exists().withMessage('maxResults es requerido')
+        .not().isEmpty().withMessage('maxResults no debe estar vacío')
+        .isNumeric().withMessage('maxResults debe ser un número'),
+
+    check('employeeNo')
+        .exists().withMessage('employeeNo es requerido')
+        .not().isEmpty().withMessage('employeeNo no debe estar vacío')
+        .isNumeric().withMessage('employeeNo debe ser un número')
+        .isLength({ min: 1, max: 8 }).withMessage('employeeNo debe tener entre 1 y 8 caracteres'),
+
+    (req, res, next) => {
+        validateResult(req, res, next);
+    }
+]
+
 const  ValidateCardIdDelete = [
     check('employeeNo')
         .exists().withMessage('employeeNo es requerido')
@@ -65,5 +87,6 @@ const validateFingerprint = [
 module.exports = {
     ValidateCardIdDelete,
     validateFingerprint,
-    validateCardAddToUser
+    validateCardAddToUser,
+    validateCardIdFromUser
 }

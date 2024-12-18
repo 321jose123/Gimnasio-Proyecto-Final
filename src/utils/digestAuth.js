@@ -1,9 +1,16 @@
 const crypto = require('crypto');
 
+function extractField(fieldName, wwwAuthenticate) {
+  const match = new RegExp(`${fieldName}="([^"]+)"`).exec(wwwAuthenticate);
+  if (!match) throw new Error(`Failed to extract ${fieldName} from www-authenticate header`);
+  return match[1];
+}
+
 function generateDigestAuthHeader(method, uri, username, password, wwwAuthenticate) {
-  const realm = /realm="([^"]+)"/.exec(wwwAuthenticate)[1];
-  const nonce = /nonce="([^"]+)"/.exec(wwwAuthenticate)[1];
-  const qop = /qop="([^"]+)"/.exec(wwwAuthenticate) ? /qop="([^"]+)"/.exec(wwwAuthenticate)[1] : null;
+  const realm = extractField('realm', wwwAuthenticate);
+  const nonce = extractField('nonce', wwwAuthenticate);
+  const qop = extractField('qop', wwwAuthenticate) || null;
+
   const nc = '00000001';
   const cnonce = crypto.randomBytes(16).toString('hex');
 

@@ -4,11 +4,14 @@ const generateDigestAuthHeader = require('../utils/digestAuth');
 const apiService = {
   get: async (url, username, password, params = {}) => {
     try {
+      console.log("GET", url, username, password, params);
       const initialResponse = await axios.get(url, { params, validateStatus: false });
 
       if (initialResponse.status !== 401 || !initialResponse.headers['www-authenticate']) {
+        console.error('Respuesta inicial:', initialResponse.status, initialResponse.headers);
         throw new Error('Failed to retrieve www-authenticate header');
       }
+      
 
       const authHeader = generateDigestAuthHeader('GET', url, username, password, initialResponse.headers['www-authenticate']);
       

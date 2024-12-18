@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const BASE_URL = process.env.BASE_URL || 'http://192.168.1.7';
+const BASE_URL = process.env.BASE_URL || 'http://192.168.88.205';
 
 module.exports = {
   API_URL_INFORMACION_CONFIGURACION_USUARIO: `${BASE_URL}/ISAPI/AccessControl/UserInfo/capabilities?format=json`,
@@ -9,4 +9,5 @@ module.exports = {
   API_URL_GET_CARD_ID: `${BASE_URL}/ISAPI/AccessControl/CaptureCardInfo?format=json`,
   API_URL_DELETE_CARD: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Delete?format=json`,
   API_URL_ADD_CARD_TO_USER: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Record?format=json`,
+  API_URL_GET_CARD_FROM_USER: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Search?format=json`,
 };

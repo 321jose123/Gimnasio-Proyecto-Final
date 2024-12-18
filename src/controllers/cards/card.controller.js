@@ -1,5 +1,5 @@
 const { apiService } = require('../../services/apiServices');
-const { API_URL_DELETE_CARD, API_URL_GET_CARD_ID, API_URL_ADD_CARD_TO_USER } = require('../../../config')
+const { API_URL_DELETE_CARD, API_URL_GET_CARD_ID, API_URL_ADD_CARD_TO_USER, API_URL_GET_CARD_FROM_USER } = require('../../../config')
 
 const getUserCardId = async (req, res) => {
   try {
@@ -32,9 +32,9 @@ const addCardToUser = async (req, res) => {
         addCard: addCard,
         operateType: 'byTerminal',
         terminalNoList: [1],
-        }
+      }
     };
-    
+
 
     const data = await apiService.post(API_URL_ADD_CARD_TO_USER, API_USERNAME, API_PASSWORD, dataParse, 'application/json');
     console.log(employeeNo);
@@ -44,11 +44,41 @@ const addCardToUser = async (req, res) => {
   }
 }
 
+const getCardIdFromUser = async (req, res) => {
+  const { searchResultPosition, maxResults, employeeNo } = req.body;
+
+  try {
+    console.log('searchResultPosition: ', searchResultPosition, 'maxResults: ', maxResults, 'employeeNo: ', employeeNo);
+    const { API_USERNAME, API_PASSWORD } = process.env;
+    const jsonData = {
+      CardInfoSearchCond: {
+        searchId: 'searchID',
+        searchResultPosition: searchResultPosition,
+        maxResults: maxResults,
+        EmployeeNoList: [
+          {
+            employeeNo: employeeNo
+          }
+        ]
+      },
+    };
+
+    console.log(jsonData);
+
+    const data = await apiService.post(API_URL_GET_CARD_FROM_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error en la busqueda de tarjeta del usuario:', employeeNo, error);
+  }
+
+}
+
 const deleteUsercard = async (req, res) => {
   try {
     const { employeeNo } = req.body;
 
-    const {  API_USERNAME, API_PASSWORD } = process.env;
+    const { API_USERNAME, API_PASSWORD } = process.env;
     const jsonData = {
       CardInfoDelCond: {
         EmployeeNoList: [{ employeeNo }],
@@ -66,4 +96,4 @@ const deleteUsercard = async (req, res) => {
   }
 };
 
-module.exports = { getUserCardId, deleteUsercard, addCardToUser };
+module.exports = { getUserCardId, deleteUsercard, addCardToUser, getCardIdFromUser };
