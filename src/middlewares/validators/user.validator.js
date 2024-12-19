@@ -16,9 +16,7 @@ const validateDeleteUser = [
     check('employeeNo')
         .exists().withMessage('employeeNo es requerido')
         .not().isEmpty().withMessage('employeeNo no debe estar vacío')
-        .isNumeric().withMessage('employeeNo debe ser un número')
-        .isLength({ min: 1, max: 8 }).withMessage('employeeNo debe tener entre 1 y 8 caracteres'),
-    (req, res, next) => {
+        .isNumeric().withMessage('employeeNo debe ser un número'),    (req, res, next) => {
         validateResult(req, res, next);
     }
 ]

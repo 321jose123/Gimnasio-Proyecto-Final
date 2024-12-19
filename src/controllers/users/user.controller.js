@@ -1,6 +1,5 @@
 const { apiService } = require('../../services/apiServices');
-const { API_URL_INFORMACION_CONFIGURACION_USUARIO } = require('../../../config');
-const { API_URL_DELETE_USER } = require('../../../config');
+const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER } = require('../../../config');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -10,6 +9,43 @@ const getUserCapabilities = async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(500).send('Error al obtener capacidades del usuario');
+  }
+};
+
+const addUserInfo = async (req, res) => {  
+
+  const { employeeNo, name, userType, Valid, localUIUserType, userVerifyMode, checkUser, addUser, gender } = req.body;
+  
+  const { beginTime, endTime } = Valid || {};
+
+
+  console.log(req.body);
+
+  try {
+
+    const jsonData = {
+      UserInfo: {
+        employeeNo: employeeNo,
+        name: name,
+        userType: userType,
+        Valid:{
+          enable: true,
+          beginTime: beginTime,
+          endTime: endTime,
+        },
+        localUIUserType: localUIUserType,
+        userVerifyMode: userVerifyMode,
+        checkUser: checkUser,
+        addUser: addUser,
+        gender: gender
+      }
+    }
+
+    const response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, contentType= 'application/json');
+
+    res.status(200).json({ message: 'Usuario agregado exitosamente', data: response });
+  } catch (error) {
+    console.error(error);
   }
 };
 
@@ -41,5 +77,6 @@ const deleteUser = async (req, res) => {
 
 module.exports = {
   getUserCapabilities,
-  deleteUser
+  deleteUser,
+  addUserInfo
 };

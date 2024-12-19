@@ -1,12 +1,22 @@
 const dotenv = require('dotenv');
 const express = require('express');
-const directoryPath = __dirname;
-const {showDirectoryTreeIfEnabled}  = require('./controllers/showDirectoryTreeIfEnabled');
-const userRoutes = require('./routes/user.routes');
+const cors = require('cors');
 
-showDirectoryTreeIfEnabled(directoryPath);
+const corsOptions = {
+    origin: '*',  
+    methods: 'GET,POST,PUT,DELETE', 
+    allowedHeaders: 'Content-Type, Authorization' 
+  };
 
+  
+  const directoryPath = __dirname;
+  const {showDirectoryTreeIfEnabled}  = require('./controllers/showDirectoryTreeIfEnabled');
+  const userRoutes = require('./routes/user.routes');
+  
+  showDirectoryTreeIfEnabled(directoryPath);
+  
 const app = express();
+app.use(cors(corsOptions));
 const port = process.env.PORT || 3000;
 app.use(express.json());
 

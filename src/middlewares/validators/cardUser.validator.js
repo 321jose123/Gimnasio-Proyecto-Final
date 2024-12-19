@@ -5,9 +5,7 @@ const validateCardAddToUser = [
     check('employeeNo')
         .exists().withMessage('employeeNo es requerido')
         .not().isEmpty().withMessage('employeeNo no debe estar vacío')
-        .isNumeric().withMessage('employeeNo debe ser un número')
-        .isLength({ min: 1, max: 8 }).withMessage('employeeNo debe tener entre 1 y 8 caracteres'),
-
+        .isNumeric().withMessage('employeeNo debe ser un número'),
     check('cardNo')
         .exists().withMessage('cardNo es requerido')
         .not().isEmpty().withMessage('cardNo no debe estar vacío')
@@ -55,9 +53,7 @@ const validateCardIdFromUser = [
     check('employeeNo')
         .exists().withMessage('employeeNo es requerido')
         .not().isEmpty().withMessage('employeeNo no debe estar vacío')
-        .isNumeric().withMessage('employeeNo debe ser un número')
-        .isLength({ min: 1, max: 8 }).withMessage('employeeNo debe tener entre 1 y 8 caracteres'),
-
+        .isNumeric().withMessage('employeeNo debe ser un número'),
     (req, res, next) => {
         validateResult(req, res, next);
     }
@@ -67,9 +63,7 @@ const  validateCardIdDelete = [
     check('employeeNo')
         .exists().withMessage('employeeNo es requerido')
         .not().isEmpty().withMessage('employeeNo no debe estar vacío')
-        .isNumeric().withMessage('employeeNo debe ser un número')
-        .isLength({ min: 1, max: 8 }).withMessage('employeeNo debe tener entre 1 y 8 caracteres'),
-    (req, res, next) => {
+        .isNumeric().withMessage('employeeNo debe ser un número'),    (req, res, next) => {
         validateResult(req, res, next);
     }
 ]

@@ -11,6 +11,7 @@ module.exports = {
 
     //TODO: INFORMACIÓN USUARIO
 
+    API_URL_ADD_USER: `${BASE_URL}/ISAPI/AccessControl/UserInfo/Record?format=json`,
     API_URL_DELETE_USER : `${BASE_URL}/ISAPI/AccessControl/UserInfo/Delete?format=json`,
 
     //TODO: ENDPOINTS IMAGEN
