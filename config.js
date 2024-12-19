@@ -3,11 +3,28 @@ require('dotenv').config();
 const BASE_URL = process.env.BASE_URL || 'http://192.168.88.205';
 
 module.exports = {
-  API_URL_INFORMACION_CONFIGURACION_USUARIO: `${BASE_URL}/ISAPI/AccessControl/UserInfo/capabilities?format=json`,
-  API_URL_GET_PICTURE: `${BASE_URL}/ISAPI/Streaming/channels/101/picture`,
-  API_URL_POST_FINGERPRINT: `${BASE_URL}/ISAPI/AccessControl/CaptureFingerPrint`,
-  API_URL_GET_CARD_ID: `${BASE_URL}/ISAPI/AccessControl/CaptureCardInfo?format=json`,
-  API_URL_DELETE_CARD: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Delete?format=json`,
-  API_URL_ADD_CARD_TO_USER: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Record?format=json`,
-  API_URL_GET_CARD_FROM_USER: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Search?format=json`,
+
+  //TODO: ENDPOINTS DE USUARIOS CONEXIÓN CON MAQUINA
+
+    //TODO: ENDPOINTS INFORMACIÓN REGLAS DEL SISTEMA
+    API_URL_INFORMACION_CONFIGURACION_USUARIO: `${BASE_URL}/ISAPI/AccessControl/UserInfo/capabilities?format=json`,
+
+    //TODO: INFORMACIÓN USUARIO
+
+    API_URL_DELETE_USER : `${BASE_URL}/ISAPI/AccessControl/UserInfo/Delete?format=json`,
+
+    //TODO: ENDPOINTS IMAGEN
+
+    API_URL_GET_PICTURE: `${BASE_URL}/ISAPI/Streaming/channels/101/picture`,
+
+    //TODO: ENDPOINTS HUELLA
+
+    API_URL_POST_FINGERPRINT: `${BASE_URL}/ISAPI/AccessControl/CaptureFingerPrint`,
+
+    //TODO: ENDPONTS TARJETA
+
+    API_URL_GET_CARD_ID: `${BASE_URL}/ISAPI/AccessControl/CaptureCardInfo?format=json`,
+    API_URL_DELETE_CARD: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Delete?format=json`,
+    API_URL_ADD_CARD_TO_USER: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Record?format=json`,
+    API_URL_GET_CARD_FROM_USER: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Search?format=json`,
 };

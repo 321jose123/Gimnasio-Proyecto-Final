@@ -62,11 +62,11 @@ const apiService = {
       }
   },
 
-  put: async (url, username, password, jsonData = {}) => {
+  put: async (url, username, password, jsonData, contentType = {}) => {
     try {
         const initialResponse = await axios.put(url, jsonData, {
             headers:{
-                'Content-Type': 'application/json'
+                'Content-Type': contentType
             },
             validateStatus: false
         });
@@ -80,7 +80,7 @@ const apiService = {
         const response = await axios.put(url, jsonData, {
           headers: {
             'Authorization': authHeader,
-            'Content-Type': 'application/json'
+            'Content-Type': contentType
           },
         });
   

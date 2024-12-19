@@ -96,4 +96,9 @@ const deleteUsercard = async (req, res) => {
   }
 };
 
-module.exports = { getUserCardId, deleteUsercard, addCardToUser, getCardIdFromUser };
+module.exports = { 
+  getUserCardId, 
+  deleteUsercard, 
+  addCardToUser, 
+  getCardIdFromUser 
+};

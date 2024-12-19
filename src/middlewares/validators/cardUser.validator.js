@@ -63,7 +63,7 @@ const validateCardIdFromUser = [
     }
 ]
 
-const  ValidateCardIdDelete = [
+const  validateCardIdDelete = [
     check('employeeNo')
         .exists().withMessage('employeeNo es requerido')
         .not().isEmpty().withMessage('employeeNo no debe estar vacío')
@@ -73,20 +73,8 @@ const  ValidateCardIdDelete = [
         validateResult(req, res, next);
     }
 ]
-
-const validateFingerprint = [
-    check('fingerNo')
-        .exists().withMessage('fingerNo es requerido')
-        .not().isEmpty().withMessage('fingerNo no debe estar vacío')
-        .isNumeric().withMessage('fingerNo debe ser un número')
-        .isLength({ min: 1, max: 5 }).withMessage('fingerNo debe tener entre 1 y 5 caracteres'),
-    (req, res, next) => {
-        validateResult(req, res, next);
-    }
-]
 module.exports = {
-    ValidateCardIdDelete,
-    validateFingerprint,
+    validateCardIdDelete,
     validateCardAddToUser,
     validateCardIdFromUser
 }
