@@ -9,17 +9,19 @@ const corsOptions = {
   };
 
   
+  
   const directoryPath = __dirname;
   const {showDirectoryTreeIfEnabled}  = require('./controllers/showDirectoryTreeIfEnabled');
   const userRoutes = require('./routes/user.routes');
   
   showDirectoryTreeIfEnabled(directoryPath);
   
-const app = express();
-app.use(cors(corsOptions));
-const port = process.env.PORT || 3000;
-app.use(express.json());
-
+  const app = express();
+  app.use(cors(corsOptions));
+  const port = process.env.PORT || 3000;
+  app.use(express.json());
+  
+  app.use(express.static('public'));
 
 app.use('/api', userRoutes)
 app.listen(port, ()=>{

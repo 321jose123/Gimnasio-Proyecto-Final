@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hikvision Live Stream</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #000;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <img id="hikvision-stream" src="" alt="Hikvision Stream" />
+
+    <script>
+      // Define the endpoint URL
+      const endpoint = 'http://localhost:3000/api/streaming';
+
+      // Target the image element
+      const imgElement = document.getElementById('hikvision-stream');
+
+      let isFetching = false;
+
+      async function updateStream() {
+        if (isFetching) return; // Salir si ya hay una solicitud en curso
+
+        isFetching = true;
+
+        try {
+          const timestamp = new Date().getTime();
+          const response = await fetch(
+            `http://localhost:3000/api/streaming?t=${timestamp}`
+          );
+          const blob = await response.blob();
+
+          const imgElement = document.getElementById('hikvision-stream');
+          imgElement.src = URL.createObjectURL(blob);
+        } catch (error) {
+          console.error('Error fetching stream:', error);
+        } finally {
+          isFetching = false;
+        }
+      }
+
+      setInterval(updateStream, 25);
+    </script>
+  </body>
+</html>

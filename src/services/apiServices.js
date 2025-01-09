@@ -2,32 +2,38 @@ const axios = require('axios');
 const generateDigestAuthHeader = require('../utils/digestAuth');
 
 const apiService = {
-  get: async (url, username, password, params = {}) => {
+  get: async (url, username, password, params = {}, config = {}) => {
     try {
-      console.log("GET", url, username, password, params);
-      const initialResponse = await axios.get(url, { params, validateStatus: false });
+        console.log("GET", url, username, password, params);
 
-      if (initialResponse.status !== 401 || !initialResponse.headers['www-authenticate']) {
-        console.error('Respuesta inicial:', initialResponse.status, initialResponse.headers);
-        throw new Error('Failed to retrieve www-authenticate header');
-      }
-      
+        const initialResponse = await axios.get(url, { params, validateStatus: false });
 
-      const authHeader = generateDigestAuthHeader('GET', url, username, password, initialResponse.headers['www-authenticate']);
-      
-      const response = await axios.get(url, {
-        params,
-        headers: {
-          'Authorization': authHeader
-        },
-      });
+        if (initialResponse.status !== 401 || !initialResponse.headers['www-authenticate']) {
+            console.error('Respuesta inicial:', initialResponse.status, initialResponse.headers);
+            throw new Error('Failed to retrieve www-authenticate header');
+        }
 
-      return response.data;
+        const authHeader = generateDigestAuthHeader('GET', url, username, password, initialResponse.headers['www-authenticate']);
+
+        const response = await axios({
+            method: 'get',
+            url,
+            params,
+            headers: {
+                ...config.headers,
+                'Authorization': authHeader,
+            },
+            data: config.data, 
+            responseType: config.responseType || 'json', 
+        });
+
+        return response.data;
     } catch (error) {
-      console.error('Error en GET:', error);
-      throw error;
+        console.error('Error en GET:', error);
+        throw error;
     }
-  },
+},
+
 
   // TODO: DEMÁS METODOS
   post: async (url, username, password, dataParse, contentType = {}) => {

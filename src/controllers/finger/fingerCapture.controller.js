@@ -34,4 +34,8 @@ const postUserFingerprint = async (req, res) => {
   }
 };
 
+const addFingertoUser = async (req, res) => {
+  
+}
+
 module.exports = { postUserFingerprint };
