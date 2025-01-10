@@ -1,7 +1,41 @@
 const { apiService } = require('../../services/apiServices');
-const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER } = require('../../../config');
+const axios = require('axios');
+const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER } = require('../../../config');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
+
+const searchUser = async (req, res) => {
+    try {
+      const {
+        searchID = "UserSearch",
+        searchResultPosition = 0,
+        maxResults = 1,
+        EmployeeNoList = [],
+        fuzzySearch = "",
+        userType = "normal",
+      } = req.body;
+
+      const jsonData = {
+        UserInfoSearchCond: {
+          searchID,
+          searchResultPosition,
+          maxResults,
+          EmployeeNoList: EmployeeNoList.map((employeeNo) => ({ employeeNo })),
+          fuzzySearch,
+          userType,
+        },
+      };
+
+      const data = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
+
+      res.status(200).json({ message: "Busqueda de usuario", data: data });
+    } catch (err) {
+      res.status(500).json({
+        message: "Error al buscar usuario",
+        error: err.message,
+        data: err.response?.data,
+      });    }
+  };
 
 const getUserCapabilities = async (req, res) => {
   try {
@@ -12,9 +46,43 @@ const getUserCapabilities = async (req, res) => {
   }
 };
 
+const updateUserFace = async (req, res) => {
+  try {
+    const {
+      searchID = "UserSearch",
+      searchResultPosition = 0,
+      maxResults = 1,
+      EmployeeNoList = [],
+    } = req.body;
+
+    const jsonData = {
+      UserInfoSearchCond: {
+        searchID,
+        searchResultPosition,
+        maxResults,
+        EmployeeNoList: EmployeeNoList.map((employeeNo) => ({ employeeNo })),
+      },
+    };
+
+    
+
+    const data = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
+
+    const { UserInfoSearch } = data;
+    console.log(JSON.stringify(UserInfoSearch));
+    const { responseStatusStrg } = UserInfoSearch || {};
+    console.log(`responseStatusStrg: ${responseStatusStrg}`);
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).send('Error al obtener capacidades del usuario');
+  }
+};
+
+
 const addUserInfo = async (req, res) => {
 
-  const { employeeNo, name, userType, Valid, doorRight , localUIUserType, userVerifyMode, checkUser, addUser, gender } = req.body;
+  const { employeeNo, name, userType, Valid, doorRight , localUIUserType, checkUser, addUser, gender } = req.body;
 
   const { beginTime, endTime } = Valid || {};
   if (beginTime && endTime && new Date(beginTime) > new Date(endTime)) {
@@ -56,7 +124,7 @@ const addUserInfo = async (req, res) => {
         },
         doorRight: doorRight,
         localUIUserType: localUIUserType,
-        userVerifyMode: userVerifyMode,
+        userVerifyMode: "cardOrFaceOrFp",
         checkUser: checkUser,
         addUser: addUser,
         gender: gender
@@ -101,5 +169,7 @@ const deleteUser = async (req, res) => {
 module.exports = {
   getUserCapabilities,
   deleteUser,
-  addUserInfo
+  addUserInfo,
+  searchUser,
+  updateUserFace
 };
