@@ -128,9 +128,10 @@ const updateUserFace = async (req, res) => {
 
 const addUserInfo = async (req, res) => {
 
-  const { employeeNo, name, userType, Valid, doorRight , localUIUserType, checkUser, addUser, gender } = req.body;
-
+  const { employeeNo, name, userType, Valid, doorRight , localUIUserType, checkUser, addUser, gender, userVerifyMode, RightPlan } = req.body;
+  
   const { beginTime, endTime } = Valid || {};
+  const [{ doorNo, planTemplateNo }] = RightPlan || [];
   if (beginTime && endTime && new Date(beginTime) > new Date(endTime)) {
     return res.status(400).json({ message: 'La fecha de inicio debe ser menor que la fecha de fin' });
   }
@@ -163,14 +164,20 @@ const addUserInfo = async (req, res) => {
         employeeNo: employeeNo,
         name: name,
         userType: userType,
+        doorRight: doorRight,
         Valid: {
           enable: true,
           beginTime: beginTimeUTC,
           endTime: endTimeUTC,
         },
-        doorRight: doorRight,
+        RightPlan: [
+          {
+            doorNo: doorNo,
+            planTemplateNo: planTemplateNo
+          }
+        ],
         localUIUserType: localUIUserType,
-        userVerifyMode: "cardOrFaceOrFp",
+        userVerifyMode: userVerifyMode,
         checkUser: checkUser,
         addUser: addUser,
         gender: gender
