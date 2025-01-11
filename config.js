@@ -26,5 +26,7 @@ module.exports = {
     API_URL_ADD_CARD_TO_USER: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Record?format=json`,
     API_URL_GET_CARD_FROM_USER: `${BASE_URL}/ISAPI/AccessControl/CardInfo/Search?format=json`,
 
-    API_URL_STREAMING : `${BASE_URL}/ISAPI/Streaming/channels/101/picture`
+    //TODO: ENDPONTS VIDEO E IMAGEN
+    API_URL_STREAMING : `${BASE_URL}/ISAPI/Streaming/channels/101/picture`,
+    API_URL_UPDATE_USER_PROFILE_IMAGE : `${BASE_URL}/ISAPI/Intelligent/FDLib/FDSetUp?format=json`
 };

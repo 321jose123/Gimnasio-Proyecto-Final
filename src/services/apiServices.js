@@ -1,4 +1,6 @@
 const axios = require('axios');
+const fs = require('fs');
+const FormData = require('form-data');
 const generateDigestAuthHeader = require('../utils/digestAuth');
 
 const apiService = {
@@ -155,7 +157,40 @@ const apiServiceImage = {
       }
     },
   
-    // TODO: DEMÁS METODOS
-  };
+      post: async (url, username, password, formDataFaceData, formDataImagePath, params = {}) => {
+    console.log("POST", url, username, password, 'formdata', formDataFaceData, 'imagen',formDataImagePath);
+
+    try {
+      // Crear el objeto FormData
+      const formData = new FormData();
+      formData.append('FaceDataRecord', formDataFaceData);
+      formData.append('img', fs.createReadStream(formDataImagePath));
+
+      // Realizar la solicitud inicial para obtener el encabezado www-authenticate
+      const initialResponse = await axios.get(url, { params, validateStatus: false });
+
+      if (!initialResponse.headers['www-authenticate']) {
+        console.error('www-authenticate header missing:', initialResponse.headers);
+        throw new Error('Failed to retrieve www-authenticate header');
+      }
+      
+
+      // Generar el encabezado de autenticación digest
+      const authHeader = generateDigestAuthHeader('PUT', url, username, password, initialResponse.headers['www-authenticate']);
+
+      // Realizar la solicitud POST con el encabezado de autenticación
+      const response = await axios.put(url, formData, {
+        headers: {
+          'Authorization': authHeader,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Error en POST:', error);
+      throw error;
+    }
+  }
+    };
 
 module.exports = {apiService, apiServiceImage};

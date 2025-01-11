@@ -1,6 +1,7 @@
-const { apiService } = require('../../services/apiServices');
-const axios = require('axios');
-const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER } = require('../../../config');
+const { apiService, apiServiceImage } = require('../../services/apiServices');
+const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE } = require('../../../config');
+const fs = require('fs');
+const path = require('path');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -47,35 +48,80 @@ const getUserCapabilities = async (req, res) => {
 };
 
 const updateUserFace = async (req, res) => {
+  console.log('Request body:✅', req.body);
+
   try {
-    const {
-      searchID = "UserSearch",
-      searchResultPosition = 0,
-      maxResults = 1,
-      EmployeeNoList = [],
-    } = req.body;
+    const { EmployeeNoList = [], img64 } = req.body;
+
+    if (!EmployeeNoList.length) {
+      return res.status(400).json({ message: 'EmployeeNoList no puede estar vacío.' });
+    }
+    if (!img64) {
+      return res.status(400).json({ message: 'img64 no puede estar vacío.' });
+    }
 
     const jsonData = {
       UserInfoSearchCond: {
-        searchID,
-        searchResultPosition,
-        maxResults,
+        searchID: "UserSearch",
+        searchResultPosition: 0,
+        maxResults: 1,
         EmployeeNoList: EmployeeNoList.map((employeeNo) => ({ employeeNo })),
       },
     };
 
+    console.log('Request body to API ✅:', jsonData);
+
+    const UserValidateResponse = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
+
+    console.log('Response from API validating user ✅:', UserValidateResponse);
+
+    if (!UserValidateResponse || !UserValidateResponse.UserInfoSearch) {
+      return res.status(500).json({ message: 'Respuesta inválida de la API de validación de usuario.' });
+    }
+
+    const responseStatusStrg = UserValidateResponse.UserInfoSearch.responseStatusStrg;
+
+    console.log('Response status string ✅:', responseStatusStrg);
+
+    if (responseStatusStrg !== 'OK') {
+      return res.status(400).json({ message: 'Error en la validación del usuario' });
+    }
+    const jpegBuffer = Buffer.from(img64, 'base64');
+    const tempImagePath = path.join(__dirname, 'tempImage.jpg');
+    console.log('Saving image to ✅:', tempImagePath);
+    fs.writeFileSync(tempImagePath, jpegBuffer);
+
+    const faceDataRecord = {
+      faceLibType: "blackFD",
+      FDID: "1",
+      FPID: EmployeeNoList[0],
+    };
+
+    try {
+      console.log('Calling API to update image ✅');
+      const apiResponse = await apiServiceImage.post(
+        API_URL_UPDATE_USER_PROFILE_IMAGE,
+        API_USERNAME,
+        API_PASSWORD,
+        JSON.stringify(faceDataRecord),
+        tempImagePath
+      );
     
-
-    const data = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
-
-    const { UserInfoSearch } = data;
-    console.log(JSON.stringify(UserInfoSearch));
-    const { responseStatusStrg } = UserInfoSearch || {};
-    console.log(`responseStatusStrg: ${responseStatusStrg}`);
-
-    res.json(data);
+      console.log('Response from API:', apiResponse);
+      res.status(200).json({ message: 'Actualización exitosa', data: apiResponse });
+    } catch (error) {
+      console.error('Error en la actualización:', error);
+      res.status(500).json({ message: 'Error en la actualización de la imagen.' });
+    } finally {
+      if (fs.existsSync(tempImagePath)) {
+        fs.unlinkSync(tempImagePath);
+        console.log('Temporary image removed.');
+      }
+    }
+    
   } catch (error) {
-    res.status(500).send('Error al obtener capacidades del usuario');
+    console.error('Error in updateUserFace:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };
 

@@ -19,16 +19,19 @@ router.get('/user/capabilities', getUserCapabilities);
 router.post('/user/addNewUser', addUserInfo);
 router.put('/user/deleteuser', validateDeleteUser ,deleteUser)
 
-router.put('/user/updateFace', updateUserFace)
+router.post('/user/updateFace', updateUserFace)
 router.post('/user/search', searchUser)
 
+//APIS DE HUELLAS
 router.post('/user/fingerprint', validateFingerprint, postUserFingerprint);
 
+//APIS DE CARDS
 router.put('/user/deleteusercard', validateCardIdDelete, deleteUsercard);
 router.get('/user/getcardid', getUserCardId)
 router.post('/user/addcardtouser', validateCardAddToUser , addCardToUser)
 router.post('/user/searchIdCardFromUser', validateCardIdFromUser , getCardIdFromUser);
 
+//APIS DE STREAMING Y FOTOS
 router.get('/streaming', validateStreaming)
 router.get('/show/streaming', showInputStreaming)
 
