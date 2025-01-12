@@ -8,22 +8,21 @@ const { API_USERNAME, API_PASSWORD } = process.env;
 const searchUser = async (req, res) => {
     try {
       const {
-        searchID = "UserSearch",
-        searchResultPosition = 0,
-        maxResults = 1,
         EmployeeNoList = [],
         fuzzySearch = "",
-        userType = "normal",
       } = req.body;
+
+      console.log("Request body:✅", req.body);
+      
 
       const jsonData = {
         UserInfoSearchCond: {
-          searchID,
-          searchResultPosition,
-          maxResults,
+          searchID: "UserSearchCond",
+          searchResultPosition: 0,
+          maxResults: 1,
           EmployeeNoList: EmployeeNoList.map((employeeNo) => ({ employeeNo })),
           fuzzySearch,
-          userType,
+          userType: "normal",
         },
       };
 
@@ -53,13 +52,6 @@ const updateUserFace = async (req, res) => {
   try {
     const { EmployeeNoList = [], img64 } = req.body;
 
-    if (!EmployeeNoList.length) {
-      return res.status(400).json({ message: 'EmployeeNoList no puede estar vacío.' });
-    }
-    if (!img64) {
-      return res.status(400).json({ message: 'img64 no puede estar vacío.' });
-    }
-
     const jsonData = {
       UserInfoSearchCond: {
         searchID: "UserSearch",
@@ -69,11 +61,7 @@ const updateUserFace = async (req, res) => {
       },
     };
 
-    console.log('Request body to API ✅:', jsonData);
-
     const UserValidateResponse = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
-
-    console.log('Response from API validating user ✅:', UserValidateResponse);
 
     if (!UserValidateResponse || !UserValidateResponse.UserInfoSearch) {
       return res.status(500).json({ message: 'Respuesta inválida de la API de validación de usuario.' });
@@ -81,14 +69,11 @@ const updateUserFace = async (req, res) => {
 
     const responseStatusStrg = UserValidateResponse.UserInfoSearch.responseStatusStrg;
 
-    console.log('Response status string ✅:', responseStatusStrg);
-
     if (responseStatusStrg !== 'OK') {
       return res.status(400).json({ message: 'Error en la validación del usuario' });
     }
     const jpegBuffer = Buffer.from(img64, 'base64');
     const tempImagePath = path.join(__dirname, 'tempImage.jpg');
-    console.log('Saving image to ✅:', tempImagePath);
     fs.writeFileSync(tempImagePath, jpegBuffer);
 
     const faceDataRecord = {
@@ -98,7 +83,6 @@ const updateUserFace = async (req, res) => {
     };
 
     try {
-      console.log('Calling API to update image ✅');
       const apiResponse = await apiServiceImage.post(
         API_URL_UPDATE_USER_PROFILE_IMAGE,
         API_USERNAME,
@@ -107,7 +91,6 @@ const updateUserFace = async (req, res) => {
         tempImagePath
       );
     
-      console.log('Response from API:', apiResponse);
       res.status(200).json({ message: 'Actualización exitosa', data: apiResponse });
     } catch (error) {
       console.error('Error en la actualización:', error);
