@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { postUserFingerprint } = require('../../controllers/finger/fingerCapture.controller');
-const { validateFingerprint } = require('../../middlewares/validators/fingerUser.validator');
+const { postUserFingerprint, addFingertoUser } = require('../../controllers/finger/fingerCapture.controller');
+const { validateFingerprint, validateAddFingerprintToUser } = require('../../middlewares/validators/fingerUser.validator');
 
 
 router.post('/', validateFingerprint , postUserFingerprint);
+router.post('/assign', validateAddFingerprintToUser , addFingertoUser);
 
 module.exports = router;

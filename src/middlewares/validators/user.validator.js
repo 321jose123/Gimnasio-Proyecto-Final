@@ -18,10 +18,9 @@ const validateUserSearch = [
         .exists().withMessage('EmployeeNoList es requerido')
         .not().isEmpty().withMessage('EmployeeNoList no debe estar vacío')
         .isArray().withMessage('EmployeeNoList debe ser un array')
-        .isLength({ max: 1 }).withMessage('EmployeeNoList debe tener solo un elemento')
         .matches(/^[0-9]+$/).withMessage('EmployeeNoList debe ser un string que contenga solo números'),
     check('fuzzySearch')
-        .exists().withMessage('fuzzySearch es requerido')
+        .optional()
         .isString().withMessage('fuzzySearch debe ser un string'),
     (req, res, next) => {
         validateResult(req, res, next);

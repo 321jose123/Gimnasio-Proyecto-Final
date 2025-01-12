@@ -18,6 +18,7 @@ module.exports = {
     //TODO: ENDPOINTS HUELLA
 
     API_URL_POST_FINGERPRINT: `${BASE_URL}/ISAPI/AccessControl/CaptureFingerPrint`,
+    API_URL_ASSIGN_FINGERPRINT: `${BASE_URL}/ISAPI/AccessControl/FingerPrintDownload?format=json`,
 
     //TODO: ENDPONTS TARJETA
 

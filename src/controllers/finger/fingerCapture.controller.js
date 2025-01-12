@@ -1,6 +1,6 @@
 const { apiService } = require('../../services/apiServices');
 const { convertXmlToJson } = require('../../utils/xlmToJson');
-const { API_URL_POST_FINGERPRINT } = require('../../../config')
+const { API_URL_POST_FINGERPRINT, API_URL_ASSIGN_FINGERPRINT } = require('../../../config')
 
 const postUserFingerprint = async (req, res) => {
   const { fingerNo } = req.body;
@@ -17,16 +17,6 @@ const postUserFingerprint = async (req, res) => {
 
     const jsonResponse = await convertXmlToJson(data);
 
-    const fingerData = jsonResponse.CaptureFingerPrint.fingerData[0];
-    const fingerId = jsonResponse.CaptureFingerPrint.fingerNo[0];
-    const fingerPrintQuality = jsonResponse.CaptureFingerPrint.fingerPrintQuality[0];
-
-
-    console.info(' Huella:', fingerId, 'obtenida satisfactoriamente. \n', 
-      'Datos de la huella: ', fingerData, '\n',
-      'Calidad de la huella:', fingerPrintQuality, '\n',
-    );
-
     res.json(jsonResponse);
   } catch (error) {
     console.error('Error in postUserFingerprint:', error);
@@ -35,7 +25,39 @@ const postUserFingerprint = async (req, res) => {
 };
 
 const addFingertoUser = async (req, res) => {
-  
-}
+  const { FingerPrintCfg } = req.body;
 
-module.exports = { postUserFingerprint };
+  try {
+    const { API_USERNAME, API_PASSWORD } = process.env;
+    const assignBody = {
+      FingerPrintCfg: {
+        employeeNo: FingerPrintCfg.employeeNo,
+        enableCardReader: FingerPrintCfg.enableCardReader,
+        fingerPrintID: FingerPrintCfg.fingerPrintID,
+        deleteFingerPrint: FingerPrintCfg.deleteFingerPrint,
+        fingerType: FingerPrintCfg.fingerType,
+        fingerData: FingerPrintCfg.fingerData,
+        leaderFP: FingerPrintCfg.leaderFP,
+        checkEmployeeNo: false
+      }
+    };
+
+    const assignResponse = await apiService.post(
+      API_URL_ASSIGN_FINGERPRINT,
+      API_USERNAME,
+      API_PASSWORD,
+      assignBody,
+      'application/json'
+    );
+
+    res.json({ message: 'Huella asignada exitosamente', data: assignResponse });
+  } catch (error) {
+    console.error('Error en addFingertoUser:', error);
+    res.status(500).json({ message: 'Error al asignar la huella', error: error.message });
+  }
+};
+
+
+
+
+module.exports = { postUserFingerprint, addFingertoUser };
