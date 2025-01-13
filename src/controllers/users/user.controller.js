@@ -2,37 +2,39 @@ const { apiService, apiServiceImage } = require('../../services/apiServices');
 const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE } = require('../../../config');
 const fs = require('fs');
 const path = require('path');
+const { validateDateRange, formatToUTC } = require('../../helpers/validate.helpers');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
 const searchUser = async (req, res) => {
-    try {
-      const {
-        EmployeeNoList = [],
-        fuzzySearch = "",
-      } = req.body;      
+  try {
+    const {
+      EmployeeNoList = [],
+      fuzzySearch = "",
+    } = req.body;
 
-      const jsonData = {
-        UserInfoSearchCond: {
-          searchID: "UserSearchCond",
-          searchResultPosition: 0,
-          maxResults: 1,
-          EmployeeNoList: EmployeeNoList.map((employeeNo) => ({ employeeNo })),
-          fuzzySearch,
-          userType: "normal",
-        },
-      };
+    const jsonData = {
+      UserInfoSearchCond: {
+        searchID: "UserSearchCond",
+        searchResultPosition: 0,
+        maxResults: 1,
+        EmployeeNoList: EmployeeNoList.map((employeeNo) => ({ employeeNo })),
+        fuzzySearch,
+        userType: "normal",
+      },
+    };
 
-      const data = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
+    const data = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
 
-      res.status(200).json({ message: "Busqueda de usuario", data: data });
-    } catch (err) {
-      res.status(500).json({
-        message: "Error al buscar usuario",
-        error: err.message,
-        data: err.response?.data,
-      });    }
-  };
+    res.status(200).json({ message: "Busqueda de usuario", data: data });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error al buscar usuario",
+      error: err.message,
+      data: err.response?.data,
+    });
+  }
+};
 
 const getUserCapabilities = async (req, res) => {
   try {
@@ -86,7 +88,7 @@ const updateUserFace = async (req, res) => {
         JSON.stringify(faceDataRecord),
         tempImagePath
       );
-    
+
       res.status(200).json({ message: 'Actualización exitosa', data: apiResponse });
     } catch (error) {
       console.error('Error en la actualización:', error);
@@ -97,7 +99,7 @@ const updateUserFace = async (req, res) => {
         console.log('Temporary image removed.');
       }
     }
-    
+
   } catch (error) {
     console.error('Error in updateUserFace:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });
@@ -107,34 +109,17 @@ const updateUserFace = async (req, res) => {
 
 const addUserInfo = async (req, res) => {
 
-  const { employeeNo, name, userType, Valid, doorRight , localUIUserType, checkUser, addUser, gender, userVerifyMode, RightPlan } = req.body;
-  
+  const { employeeNo, name, userType, Valid, doorRight, localUIUserType, checkUser, addUser, gender, userVerifyMode, RightPlan } = req.body;
+
   const { beginTime, endTime } = Valid || {};
   const [{ doorNo, planTemplateNo }] = RightPlan || [];
-  if (beginTime && endTime && new Date(beginTime) > new Date(endTime)) {
+
+  if (!validateDateRange(beginTime, endTime)) {
     return res.status(400).json({ message: 'La fecha de inicio debe ser menor que la fecha de fin' });
   }
 
-
-  const formatToUTC = (date) => {
-    const d = new Date(date);
-    console.log(`beginTime (ISO): ${d.toISOString()}`);
-    return new Date(Date.UTC(
-        d.getFullYear(),
-        d.getMonth(),
-        d.getDate(),
-        d.getHours(),
-        d.getMinutes(),
-        d.getSeconds()
-    )).toISOString().split('.')[0];
-  };
-
   const beginTimeUTC = formatToUTC(beginTime);
   const endTimeUTC = formatToUTC(endTime);
-  console.log(`beginTime (UTC): ${beginTimeUTC}`);
-  console.log(`endTime (UTC): ${endTimeUTC}`);
-
-  console.log(req.body);
 
   try {
 
