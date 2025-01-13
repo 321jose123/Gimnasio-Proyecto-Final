@@ -4,7 +4,14 @@ const BASE_URL = process.env.BASE_URL || 'http://192.168.88.205';
 
 module.exports = {
 
-  //TODO: ENDPOINTS DE USUARIOS CONEXIÓN CON MAQUINA
+  //TODO: CONEXIÓN CON DATABASE CONFIG
+  db_host: '192.168.1.4',
+  db_port: 5432,
+  db_user: 'adminCse',
+  db_password: 'cse12345',
+  db_database: 'DB_HK_CSE',
+
+    //TODO: ENDPOINTS DE USUARIOS CONEXIÓN CON MAQUINA
 
     //TODO: ENDPOINTS INFORMACIÓN REGLAS DEL SISTEMA
     API_URL_INFORMACION_CONFIGURACION_USUARIO: `${BASE_URL}/ISAPI/AccessControl/UserInfo/capabilities?format=json`,

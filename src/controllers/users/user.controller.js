@@ -10,10 +10,7 @@ const searchUser = async (req, res) => {
       const {
         EmployeeNoList = [],
         fuzzySearch = "",
-      } = req.body;
-
-      console.log("Request body:✅", req.body);
-      
+      } = req.body;      
 
       const jsonData = {
         UserInfoSearchCond: {
@@ -47,7 +44,6 @@ const getUserCapabilities = async (req, res) => {
 };
 
 const updateUserFace = async (req, res) => {
-  console.log('Request body:✅', req.body);
 
   try {
     const { EmployeeNoList = [], img64 } = req.body;
