@@ -8,7 +8,7 @@ const searchUserByEmployeeNo = async (employeeNo) => {
     const values = [employeeNo];
     const result = await client.query(query, values);
     return result.rows[0];
-}
+};
 
 const createUser = async (userInfo) => {
     const { employeeNo, name, userType, doorRight, Valid, RightPlan, localUIUserType, userVerifyMode, addUser, gender } = userInfo;

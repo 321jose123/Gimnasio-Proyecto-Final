@@ -14,6 +14,20 @@ const searchUser = async (req, res) => {
       fuzzySearch = "",
     } = req.body;
 
+    const firstEmployeeNo = EmployeeNoList.length > 0 ? EmployeeNoList[0] : null;    
+
+    const userFromDB = await UserModel.searchUserByEmployeeNo(firstEmployeeNo);
+
+    console.log(userFromDB);
+    
+        if (userFromDB) {
+            return res.status(200).json({
+                message: 'Usuario encontrado en la base de datos',
+                source: 'database',
+                data: userFromDB,
+            });
+        }
+
     const jsonData = {
       UserInfoSearchCond: {
         searchID: "UserSearchCond",
