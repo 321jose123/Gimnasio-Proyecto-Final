@@ -1,11 +1,12 @@
-const { apiService, apiServiceImage } = require('../../services/apiServices');
-const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE } = require('../../../config');
 const fs = require('fs');
 const path = require('path');
-const { validateDateRange, formatToUTC } = require('../../helpers/validate.helpers');
+const { apiService, apiServiceImage } = require('../../services/apiServices');
+const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE } = require('../../../config');
+const { validateDateRange } = require('../../helpers/validate.helpers');
 const UserModel = require('../../models/users/users.models');
 const { findUserInDevice } = require('../../services/userServices/findUserInDevice');
 const { handleError } = require('../../services/errors/handleErrors');
+const { buildUserObjects } = require('../../services/userServices/buildUserObjet');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -110,84 +111,29 @@ const updateUserFace = async (req, res) => {
 
 const addUserInfo = async (req, res) => {
 
-  const { employeeNo, name, userType, Valid, doorRight, localUIUserType, checkUser, terminalNoList, addUser, gender, userVerifyMode, RightPlan } = req.body;
+  try {
 
-  const { beginTime, endTime } = Valid || {};
-  const [{ doorNo, planTemplateNo }] = RightPlan || [];
+    const { Valid } = req.body;
+
+    const { beginTime, endTime } = Valid || {};
 
   if (!validateDateRange(beginTime, endTime)) {
     return res.status(400).json({ message: 'La fecha de inicio debe ser menor que la fecha de fin' });
   }
 
-  const beginTimeUTC = formatToUTC(beginTime);
-  const endTimeUTC = formatToUTC(endTime);
+  const { userData, jsonData } = buildUserObjects(req.body);
 
-  try {
+  const newUser = await UserModel.createUser(userData);
 
-    const jsonData = {
-      UserInfo: {
-        employeeNo: employeeNo,
-        name: name,
-        userType: userType,
-        doorRight: doorRight,
-        Valid: {
-          enable: true,
-          beginTime: beginTimeUTC,
-          endTime: endTimeUTC,
-        },
-        RightPlan: [
-          {
-            doorNo: doorNo,
-            planTemplateNo: planTemplateNo
-          }
-        ],
-        localUIUserType: localUIUserType,
-        userVerifyMode: userVerifyMode,
-        checkUser: checkUser,
-        terminalNoList: terminalNoList,
-        addUser: addUser,
-        gender: gender
-      }
-    }
+  await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
 
-    const userData = {
-      employeeNo,
-      name,
-      userType,
-      doorRight,
-      Valid: {
-        enable: true,
-        beginTime: beginTimeUTC,
-        endTime: endTimeUTC,
-      },
-      RightPlan: [{ doorNo, planTemplateNo }],
-      localUIUserType,
-      userVerifyMode,
-      checkUser,
-      addUser,
-      gender,
-    };
+  res.status(200).json({
+    message: 'Usuario agregado exitosamente',
+    data: newUser,
+  });
 
-    try {
-      const newUser = await UserModel.createUser(userData);
-
-      const response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, contentType = 'application/json');
-
-      res.status(200).json({
-        message: 'Usuario agregado exitosamente',
-        data: newUser,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({
-        message: 'Error al agregar el usuario',
-        error: error.message,
-        data: error.response?.data,
-      });
-    }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al agregar el usuario', error: error.message, data: error.response?.data });
+    handleError(res, error, 'Error al agregar usuario');
   }
 };
 
