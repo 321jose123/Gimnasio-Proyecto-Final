@@ -204,6 +204,9 @@ const deleteUser = async (req, res) => {
 
   try {
 
+    const deletedUser = await UserModel.deleteUserByEmployeeNo(employeeNo);
+
+
     const jsonData = {
       UserInfoDelCond: {
         EmployeeNoList: [{

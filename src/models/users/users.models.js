@@ -80,9 +80,38 @@ const getUserImage = async (employeeNo) => {
     }
 };
 
+const deleteUserByEmployeeNo = async (employeeNo) => {
+    try {
+        // Eliminar las imágenes relacionadas
+        const deleteImagesQuery = `
+            DELETE FROM user_images
+            WHERE employee_no = $1;
+        `;
+        await client.query(deleteImagesQuery, [employeeNo]);
+
+        // Eliminar el usuario
+        const deleteUserQuery = `
+            DELETE FROM users
+            WHERE employee_no = $1
+            RETURNING *;
+        `;
+        const result = await client.query(deleteUserQuery, [employeeNo]);
+
+        if (result.rowCount === 0) {
+            return null; // Usuario no encontrado
+        }
+
+        return result.rows[0]; // Retorna el usuario eliminado
+    } catch (error) {
+        console.error('Error al eliminar el usuario:', error);
+        throw new Error('Error al eliminar el usuario');
+    }
+};
+
 module.exports = { 
     createUser, 
     getUserImage, 
     saveUserImage, 
-    searchUserByEmployeeNo 
+    searchUserByEmployeeNo, 
+    deleteUserByEmployeeNo
 };
