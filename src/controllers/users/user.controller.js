@@ -3,6 +3,7 @@ const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_
 const fs = require('fs');
 const path = require('path');
 const { validateDateRange, formatToUTC } = require('../../helpers/validate.helpers');
+const UserModel = require('../../models/users/users.models');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -109,7 +110,7 @@ const updateUserFace = async (req, res) => {
 
 const addUserInfo = async (req, res) => {
 
-  const { employeeNo, name, userType, Valid, doorRight, localUIUserType, checkUser, addUser, gender, userVerifyMode, RightPlan } = req.body;
+  const { employeeNo, name, userType, Valid, doorRight, localUIUserType, checkUser, terminalNoList, addUser, gender, userVerifyMode, RightPlan } = req.body;
 
   const { beginTime, endTime } = Valid || {};
   const [{ doorNo, planTemplateNo }] = RightPlan || [];
@@ -143,14 +144,47 @@ const addUserInfo = async (req, res) => {
         localUIUserType: localUIUserType,
         userVerifyMode: userVerifyMode,
         checkUser: checkUser,
+        terminalNoList: terminalNoList,
         addUser: addUser,
         gender: gender
       }
     }
 
-    const response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, contentType = 'application/json');
+    const userData = {
+      employeeNo,
+      name,
+      userType,
+      doorRight,
+      Valid: {
+          enable: true,
+          beginTime: beginTimeUTC,
+          endTime: endTimeUTC,
+      },
+      RightPlan: [{ doorNo, planTemplateNo }],
+      localUIUserType,
+      userVerifyMode,
+      checkUser,
+      addUser,
+      gender,
+  };
 
-    res.status(200).json({ message: 'Usuario agregado exitosamente', data: response });
+    try {
+      const newUser = await UserModel.createUser(userData);
+
+      const response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, contentType = 'application/json');
+
+      res.status(200).json({
+          message: 'Usuario agregado exitosamente',
+          data: newUser,
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({
+          message: 'Error al agregar el usuario',
+          error: error.message,
+          data: error.response?.data,
+      });
+  }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al agregar el usuario', error: error.message, data: error.response?.data });

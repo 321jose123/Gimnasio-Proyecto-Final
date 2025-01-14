@@ -9,9 +9,14 @@ const client = new Client({
     database: db_database,
 });
 
-client.connect().then(() => {
-    console.log('Conectado a la base de datos Postgres');
-}).catch(err => {
-    console.error('Error al conectarse a la base de datos Postgres:', err);
-    process.exit(1);
-});
+const connectDB = async () => {
+    try {
+        await client.connect();
+        console.log('Conectado a la base de datos Postgres');
+    } catch (error) {
+        console.error('Error al conectarse a la base de datos Postgres:', error);
+        process.exit(1);
+    }
+};
+
+module.exports = {client, connectDB};
