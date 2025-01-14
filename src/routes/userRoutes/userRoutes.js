@@ -6,7 +6,7 @@ const { validateDeleteUser, validateAddUser, validateUserSearch, validateUserIma
 router.get('/capabilities', getUserCapabilities);
 router.post('/add', validateAddUser, addUserInfo);
 router.put('/delete', validateDeleteUser, deleteUser);
-router.post('/search' ,searchUser);
+router.post('/search', validateUserSearch ,searchUser);
 router.post('/update-face', validateUserImage , updateUserFace);
 
 module.exports = router;

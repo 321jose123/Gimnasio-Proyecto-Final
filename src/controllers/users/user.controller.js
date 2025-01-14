@@ -4,50 +4,36 @@ const fs = require('fs');
 const path = require('path');
 const { validateDateRange, formatToUTC } = require('../../helpers/validate.helpers');
 const UserModel = require('../../models/users/users.models');
+const { findUserInDevice } = require('../../services/userServices/findUserInDevice');
+const { handleError } = require('../../services/errors/handleErrors');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
 const searchUser = async (req, res) => {
   try {
-    const {
-      EmployeeNoList = [],
-      fuzzySearch = "",
-    } = req.body;
+    const { EmployeeNoList = [], fuzzySearch = "" } = req.body;
 
-    const firstEmployeeNo = EmployeeNoList.length > 0 ? EmployeeNoList[0] : null;    
+    const firstEmployeeNo = EmployeeNoList[0];
 
     const userFromDB = await UserModel.searchUserByEmployeeNo(firstEmployeeNo);
 
-    console.log(userFromDB);
-    
-        if (userFromDB) {
-            return res.status(200).json({
-                message: 'Usuario encontrado en la base de datos',
-                source: 'database',
-                data: userFromDB,
-            });
-        }
+    if (userFromDB) {
+      return res.status(200).json({
+        message: 'Usuario encontrado en la base de datos',
+        source: 'database',
+        data: userFromDB,
+      });
+    }
 
-    const jsonData = {
-      UserInfoSearchCond: {
-        searchID: "UserSearchCond",
-        searchResultPosition: 0,
-        maxResults: 1,
-        EmployeeNoList: EmployeeNoList.map((employeeNo) => ({ employeeNo })),
-        fuzzySearch,
-        userType: "normal",
-      },
-    };
+    const userFromDevice = await findUserInDevice(EmployeeNoList, fuzzySearch);
 
-    const data = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
-
-    res.status(200).json({ message: "Busqueda de usuario", data: data });
-  } catch (err) {
-    res.status(500).json({
-      message: "Error al buscar usuario",
-      error: err.message,
-      data: err.response?.data,
+    return res.status(200).json({
+      message: "Búsqueda de usuario",
+      source: "device",
+      data: userFromDevice,
     });
+  } catch (err) {
+    handleError(res, err, 'error al buscar usuario');
   }
 };
 
@@ -170,9 +156,9 @@ const addUserInfo = async (req, res) => {
       userType,
       doorRight,
       Valid: {
-          enable: true,
-          beginTime: beginTimeUTC,
-          endTime: endTimeUTC,
+        enable: true,
+        beginTime: beginTimeUTC,
+        endTime: endTimeUTC,
       },
       RightPlan: [{ doorNo, planTemplateNo }],
       localUIUserType,
@@ -180,7 +166,7 @@ const addUserInfo = async (req, res) => {
       checkUser,
       addUser,
       gender,
-  };
+    };
 
     try {
       const newUser = await UserModel.createUser(userData);
@@ -188,17 +174,17 @@ const addUserInfo = async (req, res) => {
       const response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, contentType = 'application/json');
 
       res.status(200).json({
-          message: 'Usuario agregado exitosamente',
-          data: newUser,
+        message: 'Usuario agregado exitosamente',
+        data: newUser,
       });
-  } catch (error) {
+    } catch (error) {
       console.error(error);
       res.status(500).json({
-          message: 'Error al agregar el usuario',
-          error: error.message,
-          data: error.response?.data,
+        message: 'Error al agregar el usuario',
+        error: error.message,
+        data: error.response?.data,
       });
-  }
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al agregar el usuario', error: error.message, data: error.response?.data });
