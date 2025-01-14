@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 const { apiService, apiServiceImage } = require('../../services/apiServices');
 const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE } = require('../../../config');
 const { validateDateRange } = require('../../helpers/validate.helpers');
@@ -51,6 +52,19 @@ const updateUserFace = async (req, res) => {
 
   try {
     const { EmployeeNoList = [], img64 } = req.body;
+
+    const employeeNo = EmployeeNoList[0];
+
+    const existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
+    if (!existingUser) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    const savedImage = await UserModel.saveUserImage(employeeNo, img64);
+
+    if (!savedImage) {
+      return res.status(500).json({ message: 'Error al guardar la imagen del usuario.' });
+    }
 
     const jsonData = {
       UserInfoSearchCond: {
@@ -108,6 +122,53 @@ const updateUserFace = async (req, res) => {
   }
 };
 
+const getUserImageAsJPEG = async (req, res) => {
+  try {
+    const { employeeNo } = req.params;
+
+    if (!employeeNo) {
+      return res.status(400).json({ message: 'employeeNo es obligatorio.' });
+    }
+
+    // Obtener la imagen en formato Base64 desde la base de datos
+    const imagerecord = await UserModel.getUserImage(employeeNo);
+
+    const img64 = imagerecord.img64
+
+    if (!img64) {
+      return res.status(404).json({ message: 'Imagen no encontrada para el usuario.' });
+    }
+
+    const img64String = img64.toString();
+
+
+    const img64Cleaned = img64String.replace(/\s+/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
+
+    const img64WithHeader = img64Cleaned.startsWith('data:image/jpeg;base64,')
+      ? img64Cleaned
+      : `data:image/jpeg;base64,${img64Cleaned}`;
+
+
+    const imgBuffer = Buffer.from(img64WithHeader.split(',')[1], 'base64');
+
+    const croppedImage = await sharp(imgBuffer)
+      .resize(300, 300, {
+        fit: 'cover',
+        position: 'center',
+      })
+      .jpeg()
+      .toBuffer();
+
+    res.set('Content-Type', 'image/jpeg');
+    res.send(croppedImage);
+  } catch (error) {
+    console.error('Error al obtener la imagen en formato JPEG:', error);
+    res.status(500).json({
+      message: 'Error interno del servidor al obtener la imagen.',
+      error: error.message,
+    });
+  }
+};
 
 const addUserInfo = async (req, res) => {
 
@@ -117,20 +178,20 @@ const addUserInfo = async (req, res) => {
 
     const { beginTime, endTime } = Valid || {};
 
-  if (!validateDateRange(beginTime, endTime)) {
-    return res.status(400).json({ message: 'La fecha de inicio debe ser menor que la fecha de fin' });
-  }
+    if (!validateDateRange(beginTime, endTime)) {
+      return res.status(400).json({ message: 'La fecha de inicio debe ser menor que la fecha de fin' });
+    }
 
-  const { userData, jsonData } = buildUserObjects(req.body);
+    const { userData, jsonData } = buildUserObjects(req.body);
 
-  const newUser = await UserModel.createUser(userData);
+    const newUser = await UserModel.createUser(userData);
 
-  await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
+    await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
 
-  res.status(200).json({
-    message: 'Usuario agregado exitosamente',
-    data: newUser,
-  });
+    res.status(200).json({
+      message: 'Usuario agregado exitosamente',
+      data: newUser,
+    });
 
   } catch (error) {
     handleError(res, error, 'Error al agregar usuario');
@@ -168,5 +229,6 @@ module.exports = {
   deleteUser,
   addUserInfo,
   searchUser,
-  updateUserFace
+  updateUserFace,
+  getUserImageAsJPEG
 };

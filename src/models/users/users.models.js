@@ -47,4 +47,42 @@ const createUser = async (userInfo) => {
     }
 };
 
-module.exports = { createUser, searchUserByEmployeeNo };
+const saveUserImage = async (employeeNo, img64) => {
+    const query = `
+        INSERT INTO user_images (employee_no, img64)
+        VALUES ($1, $2)
+        RETURNING *;
+    `;
+    const values = [employeeNo, img64];
+
+    try {
+        const result = await client.query(query, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error al guardar la imagen del usuario:', error);
+        throw new Error('Error al guardar la imagen del usuario');
+    }
+};
+
+const getUserImage = async (employeeNo) => {
+    const query = `
+        SELECT * FROM user_images
+        WHERE employee_no = $1;
+    `;
+    const values = [employeeNo];
+
+    try {
+        const result = await client.query(query, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error al obtener la imagen del usuario:', error);
+        throw new Error('Error al obtener la imagen del usuario');
+    }
+};
+
+module.exports = { 
+    createUser, 
+    getUserImage, 
+    saveUserImage, 
+    searchUserByEmployeeNo 
+};
