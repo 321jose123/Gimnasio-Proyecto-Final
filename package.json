@@ -21,7 +21,6 @@
     "prettier": "^3.4.2"
   },
   "dependencies": {
-    "@mhoc/axios-digest-auth": "^0.8.0",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
