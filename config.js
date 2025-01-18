@@ -1,11 +1,11 @@
 require('dotenv').config();
 
-const BASE_URL = process.env.BASE_URL || 'http://192.168.88.205';
+const BASE_URL = process.env.BASE_URL || 'http://192.168.1.7';
 
 module.exports = {
 
   //TODO: CONEXIÓN CON DATABASE CONFIG
-  db_host: 'localhost',
+  db_host: '192.168.1.3',
   db_port: 5432,
   db_user: 'adminCse',
   db_password: 'cse12345',
