@@ -29,24 +29,17 @@ const validateUserSearch = [
 
     const validateUserImage = [
         check('EmployeeNoList')
-        .exists().withMessage('EmployeeNoList es requerido')
-        .isArray({ min: 1 }).withMessage('EmployeeNoList debe ser un arreglo con al menos un elemento')
-        .custom((list) => {
-            if (!list.every((no) => /^\d+$/.test(no))) {
-                throw new Error('Todos los elementos de EmployeeNoList deben ser números');
-            }
-            return true;
-        }).withMessage('EmployeeNoList contiene elementos no válidos'),
+            .exists().withMessage('EmployeeNoList es requerido')
+            .isArray({ min: 1 }).withMessage('EmployeeNoList debe ser un arreglo con al menos un elemento')
+            .matches(/^[0-9]+$/).withMessage('EmployeeNoList debe ser un string que contenga solo números'),
         check('img64')
         .exists().withMessage('img64 es requerido')
         .not().isEmpty().withMessage('img64 no debe estar vacío')
-        .custom((value) => {
-            const base64Pattern = /^data:image\/(jpeg|png|jpg);base64,[A-Za-z0-9+/=]+$/;
-            if (!base64Pattern.test(value)) {
-                throw new Error('img64 debe ser una imagen válida en formato base64');
-            }
-            return true;
-        }).withMessage('img64 no contiene un formato base64 válido'),
+        .isString().withMessage('img64 debe ser un string')
+        .matches(/^\S+$/).withMessage('img64 no debe contener espacios'),
+        (req, res, next) => {
+            validateResult(req, res, next);
+        }
     ]
 
 const validateAddUser = [

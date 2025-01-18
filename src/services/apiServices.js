@@ -2,6 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
 const generateDigestAuthHeader = require('../utils/digestAuth');
+const { error } = require('console');
 
 const apiService = {
   get: async (url, username, password, params = {}, config = {}) => {
@@ -92,7 +93,7 @@ const apiService = {
           },
         });
   
-        return response.data;
+        return { status: 200 };
       } catch (error) {
         console.error('Error en PUT:', error);
         throw error;

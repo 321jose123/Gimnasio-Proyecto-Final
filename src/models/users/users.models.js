@@ -13,12 +13,6 @@ const searchUserByEmployeeNo = async (employeeNo) => {
 const createUser = async (userInfo) => {
     const { employeeNo, name, userType, doorRight, Valid, RightPlan, localUIUserType, userVerifyMode, addUser, gender } = userInfo;
 
-    const existingUser = await searchUserByEmployeeNo(employeeNo);
-    if (existingUser) {
-        console.log('Usuario ya existe:', existingUser);
-        return existingUser;
-    }
-
     const query = `
     INSERT INTO users (
         employee_no, name, user_type, door_right, valid_enable, valid_begin_time,
