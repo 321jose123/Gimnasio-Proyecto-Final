@@ -177,6 +177,34 @@ const updateUserFace = async (req, res) => {
   }
 };
 
+const deleteUserImage = async (req, res) => {
+  const {employeeNo} = req.body;
+
+  if (!employeeNo || isNaN(employeeNo)) {
+    return res.status(400).json({ message: 'employeeNo es obligatorio y debe ser un número válido.' });
+  }
+
+  const existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
+  if (!existingUser) {
+    return res.status(404).json({
+      message: 'El usuario no existe en la base de datos.',
+      data: existingUser,
+    });
+  }
+
+  await UserModel.deleteUserImage(employeeNo);
+
+  const jsonData = {
+    "faceLibType":"blackFD",
+    "FDID":"1",
+    "FPID":employeeNo,
+    "deleteFP":true
+  }
+
+  const response = await apiService.put(API_URL_UPDATE_USER_PROFILE_IMAGE, API_USERNAME, API_PASSWORD, JSON.stringify(jsonData));
+  res.status(200).json({ message: 'Imagen eliminada exitosamente', data: response });
+}
+
   /**
    * Obtiene la imagen de perfil del usuario en formato JPEG.
    * @returns {Promise<Response>}
@@ -358,5 +386,6 @@ module.exports = {
   addUserInfo,
   searchUser,
   updateUserFace,
+  deleteUserImage,
   getUserImageAsJPEG
 };

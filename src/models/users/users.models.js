@@ -58,6 +58,23 @@ const saveUserImage = async (employeeNo, img64) => {
     }
 };
 
+const deleteUserImage = async (employeeNo) => {
+    const query = `
+        DELETE FROM user_images
+        WHERE employee_no = $1
+        RETURNING *;
+    `;
+    const values = [employeeNo];
+
+    try {
+        const result = await client.query(query, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error al eliminar la imagen del usuario:', error);
+        throw new Error('Error al eliminar la imagen del usuario');
+    }
+}
+
 const getUserImage = async (employeeNo) => {
     const query = `
         SELECT * FROM user_images
@@ -76,14 +93,12 @@ const getUserImage = async (employeeNo) => {
 
 const deleteUserByEmployeeNo = async (employeeNo) => {
     try {
-        // Eliminar las imágenes relacionadas
         const deleteImagesQuery = `
             DELETE FROM user_images
             WHERE employee_no = $1;
         `;
         await client.query(deleteImagesQuery, [employeeNo]);
 
-        // Eliminar el usuario
         const deleteUserQuery = `
             DELETE FROM users
             WHERE employee_no = $1
@@ -92,10 +107,10 @@ const deleteUserByEmployeeNo = async (employeeNo) => {
         const result = await client.query(deleteUserQuery, [employeeNo]);
 
         if (result.rowCount === 0) {
-            return null; // Usuario no encontrado
+            return null;
         }
 
-        return result.rows[0]; // Retorna el usuario eliminado
+        return result.rows[0];
     } catch (error) {
         console.error('Error al eliminar el usuario:', error);
         throw new Error('Error al eliminar el usuario');
@@ -106,6 +121,7 @@ module.exports = {
     createUser, 
     getUserImage, 
     saveUserImage, 
+    deleteUserImage,
     searchUserByEmployeeNo, 
     deleteUserByEmployeeNo
 };
