@@ -8,6 +8,6 @@ router.post('/add', validateAddUser, addUserInfo);
 router.put('/delete', validateDeleteUser, deleteUser);
 router.post('/search', validateUserSearch ,searchUser);
 router.post('/update-face', validateUserImage , updateUserFace);
-router.get('/profile-image/:employeeNo', getUserImageAsJPEG)
+router.get('/profile-image', getUserImageAsJPEG)
 
 module.exports = router;

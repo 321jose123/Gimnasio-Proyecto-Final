@@ -185,13 +185,13 @@ const updateUserFace = async (req, res) => {
    */
 const getUserImageAsJPEG = async (req, res) => {
   try {
-    const { employeeNo } = req.params;
+    const { employeeNo } = req.body;
 
     if (!employeeNo || isNaN(employeeNo)) {
       return res.status(400).json({ message: 'employeeNo es obligatorio y debe ser un número válido.' });
     }
 
-    const existingUser = await UserModel.searchUserByEmployeeNo(userData.employeeNo);
+    const existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
     if (!existingUser) {
       return res.status(404).json({
         message: 'El usuario no existe en la base de datos.',
@@ -219,7 +219,7 @@ const getUserImageAsJPEG = async (req, res) => {
 
     const imgBuffer = Buffer.from(img64WithHeader.split(',')[1], 'base64');
 
-    const croppedImage = sharp(imgBuffer)
+    croppedImage = sharp(imgBuffer)
     try {
       croppedImage = await sharp(imgBuffer)
         .resize(300, 300, { fit: 'cover', position: 'center' })
