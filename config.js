@@ -5,11 +5,11 @@ const BASE_URL = process.env.BASE_URL || 'http://192.168.1.7';
 module.exports = {
 
   //TODO: CONEXIÓN CON DATABASE CONFIG
-  db_host: '192.168.1.3',
-  db_port: 5432,
-  db_user: 'adminCse',
-  db_password: 'cse12345',
-  db_database: 'DB_HK_CSE',
+  db_host: '172.26.0.5',
+  db_port: 10000,
+  db_user: 'postgres',
+  db_password: 'Cse12345%',
+  db_database: 'postgres',
 
     //TODO: ENDPOINTS DE USUARIOS CONEXIÓN CON MAQUINA
 
