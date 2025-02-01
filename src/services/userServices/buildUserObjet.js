@@ -12,38 +12,72 @@ const buildUserObjects = (data) => {
     terminalNoList,
     addUser,
     gender,
-    userVerifyMode,
-    RightPlan,
+    email,
+    phoneNumber,
+    address,
+    city,
+    state,
+    postalCode,
+    country,
+    dateOfBirth
   } = data;
 
   const { beginTime, endTime } = Valid || {};
-  const [{ doorNo, planTemplateNo } = {}] = RightPlan || [];
-
-  const beginTimeUTC = formatToUTC(beginTime);
-  const endTimeUTC = formatToUTC(endTime);
 
   const userData = {
     employeeNo,
     name,
-    userType,
-    doorRight,
+    userType: "normal",
+    doorRight: "1",
     Valid: {
       enable: true,
-      beginTime: beginTimeUTC,
-      endTime: endTimeUTC,
+      beginTime: formatToUTC(beginTime),
+      endTime: formatToUTC(endTime),
     },
-    RightPlan: [{ doorNo, planTemplateNo }],
-    localUIUserType,
-    userVerifyMode,
-    checkUser,
-    addUser,
+    RightPlan: [
+      {
+        doorNo: 1,
+        planTemplateNo: "1",
+      },
+    ],
+    localUIUserType: "admin",
+    userVerifyMode: "faceOrFpOrCardOrPw",
+    checkUser: true,
+    terminalNoList: [1],
+    addUser: true,
     gender,
+    email,
+    phoneNumber,
+    address,
+    city,
+    state,
+    postalCode,
+    country,
+    dateOfBirth: formatToUTC(dateOfBirth),
   };
 
   const jsonData = {
-    UserInfo: {
-      ...userData,
-      terminalNoList,
+    userInfo: {
+      employeeNo,
+      name,
+      userType: "normal",
+      Valid: {
+        enable: true,
+        beginTime: formatToUTC(beginTime),
+        endTime: formatToUTC(endTime),
+      },
+      doorRight: "1",
+      RightPlan: [
+        {
+          doorNo: 1,
+          planTemplateNo: "1",
+        },
+      ],
+      localUIUserType: "admin",
+      userVerifyMode: "faceOrFpOrCardOrPw",
+      checkUser: true,
+      terminalNoList: [1],
+      addUser: true,
     },
   };
 

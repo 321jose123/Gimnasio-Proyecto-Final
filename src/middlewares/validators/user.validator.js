@@ -8,9 +8,9 @@ const validateDeleteUser = [
         .exists().withMessage('employeeNo es requerido')
         .not().isEmpty().withMessage('employeeNo no debe estar vacío')
         .isString().withMessage('employeeNo debe ser un string')
-        .matches(/^[0-9]+$/).withMessage('employeeNo debe ser un string que contenga solo números'),    (req, res, next) => {
-        validateResult(req, res, next);
-    }
+        .matches(/^[0-9]+$/).withMessage('employeeNo debe ser un string que contenga solo números'), (req, res, next) => {
+            validateResult(req, res, next);
+        }
 ]
 
 const validateUserSearch = [
@@ -27,27 +27,27 @@ const validateUserSearch = [
     }
 ]
 
-    const validateUserImage = [
-        check('EmployeeNoList')
-            .exists().withMessage('EmployeeNoList es requerido')
-            .isArray({ min: 1 }).withMessage('EmployeeNoList debe ser un arreglo con al menos un elemento')
-            .matches(/^[0-9]+$/).withMessage('EmployeeNoList debe ser un string que contenga solo números'),
-        check('img64')
+const validateUserImage = [
+    check('EmployeeNoList')
+        .exists().withMessage('EmployeeNoList es requerido')
+        .isArray({ min: 1 }).withMessage('EmployeeNoList debe ser un arreglo con al menos un elemento')
+        .matches(/^[0-9]+$/).withMessage('EmployeeNoList debe ser un string que contenga solo números'),
+    check('img64')
         .exists().withMessage('img64 es requerido')
         .not().isEmpty().withMessage('img64 no debe estar vacío')
         .isString().withMessage('img64 debe ser un string')
         .matches(/^\S+$/).withMessage('img64 no debe contener espacios'),
-        (req, res, next) => {
-            validateResult(req, res, next);
-        }
-    ]
+    (req, res, next) => {
+        validateResult(req, res, next);
+    }
+]
 
 const validateAddUser = [
     check('employeeNo')
         .exists().withMessage('employeeNo es requerido')
         .not().isEmpty().withMessage('employeeNo no debe estar vacío')
         .isString().withMessage('employeeNo debe ser un string')
-        .matches(/^[0-9]+$/).withMessage('employeeNo debe ser un string que contenga solo números'),
+        .matches(/^[0-9]+$/).withMessage('employeeNo debe contener solo números'),
     check('name')
         .exists().withMessage('name es requerido')
         .not().isEmpty().withMessage('name no debe estar vacío')
@@ -78,10 +78,44 @@ const validateAddUser = [
     check('gender')
         .exists().withMessage('gender es requerido')
         .isIn(['male', 'female']).withMessage('gender debe ser male o female'),
+
+    // Nuevos campos para información personal
+    check('email')
+        .exists().withMessage('email es requerido')
+        .isEmail().withMessage('email debe ser un correo electrónico válido'),
+
+    check('phoneNumber')
+        .optional()
+        .isString().withMessage('phoneNumber debe ser un string'),
+
+    check('address')
+        .optional()
+        .isString().withMessage('address debe ser un string'),
+
+    check('city')
+        .optional()
+        .isString().withMessage('city debe ser un string'),
+
+    check('state')
+        .optional()
+        .isString().withMessage('state debe ser un string'),
+
+    check('postalCode')
+        .optional()
+        .isString().withMessage('postalCode debe ser un string'),
+
+    check('country')
+        .optional()
+        .isString().withMessage('country debe ser un string'),
+
+    check('dateOfBirth')
+        .optional()
+        .isISO8601().withMessage('dateOfBirth debe ser una fecha válida (formato ISO8601)'),
+
     (req, res, next) => {
         validateResult(req, res, next);
     }
-]
+];
 
 module.exports = {
     validateDeleteUser,

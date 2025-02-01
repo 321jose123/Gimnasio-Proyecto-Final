@@ -11,21 +11,65 @@ const searchUserByEmployeeNo = async (employeeNo) => {
 };
 
 const createUser = async (userInfo) => {
-    const { employeeNo, name, userType, doorRight, Valid, RightPlan, localUIUserType, userVerifyMode, addUser, gender } = userInfo;
+    const {
+        employeeNo,
+        name,
+        userType,
+        doorRight,
+        Valid,
+        RightPlan,
+        localUIUserType,
+        userVerifyMode,
+        addUser,
+        gender,
+        email,
+        phoneNumber,
+        address,
+        city,
+        country,
+        dateOfBirth,
+    } = userInfo;
+
+    const doorNo = RightPlan && RightPlan[0] ? RightPlan[0].doorNo : null;
+    const planTemplateNo = RightPlan && RightPlan[0] ? RightPlan[0].planTemplateNo : null;
 
     const query = `
-    INSERT INTO users (
-        employee_no, name, user_type, door_right, valid_enable, valid_begin_time,
-        valid_end_time, door_no, plan_template_no, local_ui_user_type, user_verify_mode, add_user, gender
-    ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
-    )
-`;
+      INSERT INTO users (
+          employee_no, name, user_type, door_right,
+          valid_enable, valid_begin_time, valid_end_time,
+          door_no, plan_template_no,
+          local_ui_user_type, user_verify_mode, add_user, gender,
+          email, phone_number, address, city, country, date_of_birth
+      ) VALUES (
+          $1, $2, $3, $4,
+          $5, $6, $7,
+          $8, $9,
+          $10, $11, $12, $13,
+          $14, $15, $16, $17, $18, $19
+      )
+      RETURNING *;
+    `;
 
     const values = [
-        employeeNo, name, userType, doorRight, Valid.enable, Valid.beginTime, Valid.endTime,
-        RightPlan[0]?.doorNo, RightPlan[0]?.planTemplateNo, localUIUserType,
-        userVerifyMode, addUser, gender
+        employeeNo,
+        name,
+        userType,
+        doorRight,
+        Valid.enable,
+        Valid.beginTime,
+        Valid.endTime,
+        doorNo,
+        planTemplateNo,
+        localUIUserType,
+        userVerifyMode,
+        addUser,
+        gender,
+        email,
+        phoneNumber,
+        address,
+        city,
+        country,
+        dateOfBirth,
     ];
 
     try {
@@ -40,6 +84,7 @@ const createUser = async (userInfo) => {
         throw new Error('Error al crear el usuario');
     }
 };
+
 
 const saveUserImage = async (employeeNo, img64) => {
     const query = `
@@ -117,11 +162,11 @@ const deleteUserByEmployeeNo = async (employeeNo) => {
     }
 };
 
-module.exports = { 
-    createUser, 
-    getUserImage, 
-    saveUserImage, 
+module.exports = {
+    createUser,
+    getUserImage,
+    saveUserImage,
     deleteUserImage,
-    searchUserByEmployeeNo, 
+    searchUserByEmployeeNo,
     deleteUserByEmployeeNo
 };
