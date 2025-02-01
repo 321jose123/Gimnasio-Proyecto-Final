@@ -27,8 +27,8 @@ const buildUserObjects = (data) => {
   const userData = {
     employeeNo,
     name,
-    userType: "normal",
-    doorRight: "1",
+    userType: userType || "normal",
+    doorRight: doorRight || "1",
     Valid: {
       enable: true,
       beginTime: formatToUTC(beginTime),
@@ -40,11 +40,11 @@ const buildUserObjects = (data) => {
         planTemplateNo: "1",
       },
     ],
-    localUIUserType: "admin",
+    localUIUserType: localUIUserType || "admin",
     userVerifyMode: "faceOrFpOrCardOrPw",
-    checkUser: true,
-    terminalNoList: [1],
-    addUser: true,
+    checkUser: checkUser || true,
+    terminalNoList: terminalNoList || [1],
+    addUser: addUser || true,
     gender,
     email,
     phoneNumber,
@@ -66,18 +66,18 @@ const buildUserObjects = (data) => {
         beginTime: formatToUTC(beginTime),
         endTime: formatToUTC(endTime),
       },
-      doorRight: "1",
+      doorRight: doorRight || "1",
       RightPlan: [
         {
           doorNo: 1,
           planTemplateNo: "1",
         },
       ],
-      localUIUserType: "admin",
+      localUIUserType: localUIUserType || "admin",
       userVerifyMode: "faceOrFpOrCardOrPw",
       checkUser: true,
       terminalNoList: [1],
-      addUser: true,
+      addUser: addUser || true,
     },
   };
 
