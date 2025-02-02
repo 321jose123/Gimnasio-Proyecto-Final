@@ -1,5 +1,14 @@
 const { client } = require("../../db/databasepg");
 
+/**
+ * Busca y retorna la información de un usuario a partir de su número de empleado.
+ *
+ * @async
+ * @function searchUserByEmployeeNo
+ * @param {string} employeeNo - Número de empleado del usuario.
+ * @returns {Promise<Object|null>} - Objeto del usuario encontrado o null si no existe.
+ * @throws {Error} - Lanza un error si ocurre algún problema al ejecutar la consulta.
+ */
 const searchUserByEmployeeNo = async (employeeNo) => {
     const query = `
         SELECT * FROM users
@@ -10,6 +19,36 @@ const searchUserByEmployeeNo = async (employeeNo) => {
     return result.rows[0];
 };
 
+/**
+ * Crea un nuevo usuario en la base de datos.
+ *
+ * @async
+ * @function createUser
+ * @param {Object} userInfo - Objeto con la información del usuario.
+ * @param {string} userInfo.employeeNo - Número de empleado del usuario.
+ * @param {string} userInfo.name - Nombre del usuario.
+ * @param {string} userInfo.userType - Tipo de usuario (por ejemplo, "normal", "visitor", etc.).
+ * @param {string} userInfo.doorRight - Derecho de acceso del usuario.
+ * @param {Object} userInfo.Valid - Objeto con la información de validez del usuario.
+ * @param {boolean} userInfo.Valid.enable - Indica si la validez está habilitada.
+ * @param {string} userInfo.Valid.beginTime - Fecha de inicio de la validez (en formato compatible con PostgreSQL).
+ * @param {string} userInfo.Valid.endTime - Fecha de fin de la validez.
+ * @param {Array<Object>} userInfo.RightPlan - Arreglo con la información del plan de acceso.
+ * @param {number} userInfo.RightPlan[].doorNo - Número de puerta.
+ * @param {string} userInfo.RightPlan[].planTemplateNo - Plantilla del plan.
+ * @param {string} userInfo.localUIUserType - Tipo de usuario para la interfaz local.
+ * @param {string} userInfo.userVerifyMode - Modo de verificación del usuario.
+ * @param {boolean} userInfo.addUser - Bandera que indica si se debe agregar el usuario.
+ * @param {string} userInfo.gender - Género del usuario ("male" o "female").
+ * @param {string} userInfo.email - Correo electrónico del usuario.
+ * @param {string} userInfo.phoneNumber - Número de celular del usuario.
+ * @param {string} userInfo.address - Dirección de residencia del usuario.
+ * @param {string} userInfo.city - Ciudad del usuario.
+ * @param {string} userInfo.country - País del usuario.
+ * @param {string} userInfo.dateOfBirth - Fecha de nacimiento del usuario (formato YYYY-MM-DD).
+ * @returns {Promise<Object>} - Objeto con la información del usuario creado.
+ * @throws {Error} - Lanza un error si ocurre algún problema al ejecutar la consulta.
+ */
 const createUser = async (userInfo) => {
     const {
         employeeNo,
@@ -85,7 +124,17 @@ const createUser = async (userInfo) => {
     }
 };
 
-
+/**
+ * Inserta o actualiza la imagen del usuario en la tabla user_images.
+ * Si ya existe una imagen para el employeeNo proporcionado, se actualiza con el nuevo valor.
+ *
+ * @async
+ * @function saveUserImage
+ * @param {string} employeeNo - Número de empleado del usuario.
+ * @param {string} img64 - Imagen en formato Base64.
+ * @returns {Promise<Object>} - Objeto con la información de la imagen insertada o actualizada.
+ * @throws {Error} - Lanza un error si ocurre algún problema al ejecutar la consulta.
+ */
 const saveUserImage = async (employeeNo, img64) => {
     const query = `
       INSERT INTO user_images (employee_no, img64)
@@ -103,9 +152,17 @@ const saveUserImage = async (employeeNo, img64) => {
       console.error('Error al guardar la imagen del usuario:', error);
       throw new Error('Error al guardar la imagen del usuario');
     }
-  };
+};
   
-
+/**
+ * Elimina la imagen de un usuario de la tabla user_images.
+ *
+ * @async
+ * @function deleteUserImage
+ * @param {string} employeeNo - Número de empleado del usuario cuya imagen se eliminará.
+ * @returns {Promise<Object>} - Objeto con la información de la imagen eliminada.
+ * @throws {Error} - Lanza un error si ocurre algún problema al ejecutar la consulta.
+ */
 const deleteUserImage = async (employeeNo) => {
     const query = `
         DELETE FROM user_images
@@ -123,6 +180,15 @@ const deleteUserImage = async (employeeNo) => {
     }
 }
 
+/**
+ * Obtiene la imagen de un usuario a partir de su número de empleado.
+ *
+ * @async
+ * @function getUserImage
+ * @param {string} employeeNo - Número de empleado del usuario.
+ * @returns {Promise<Object|null>} - Objeto con la imagen del usuario o null si no se encuentra.
+ * @throws {Error} - Lanza un error si ocurre algún problema al ejecutar la consulta.
+ */
 const getUserImage = async (employeeNo) => {
     const query = `
         SELECT * FROM user_images
@@ -139,6 +205,15 @@ const getUserImage = async (employeeNo) => {
     }
 };
 
+/**
+ * Elimina un usuario y sus imágenes asociadas de la base de datos usando su número de empleado.
+ *
+ * @async
+ * @function deleteUserByEmployeeNo
+ * @param {string} employeeNo - Número de empleado del usuario a eliminar.
+ * @returns {Promise<Object|null>} - Objeto con la información del usuario eliminado o null si no se encontró.
+ * @throws {Error} - Lanza un error si ocurre algún problema al ejecutar las consultas.
+ */
 const deleteUserByEmployeeNo = async (employeeNo) => {
     try {
         const deleteImagesQuery = `
