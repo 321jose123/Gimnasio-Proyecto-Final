@@ -88,20 +88,23 @@ const createUser = async (userInfo) => {
 
 const saveUserImage = async (employeeNo, img64) => {
     const query = `
-        INSERT INTO user_images (employee_no, img64)
-        VALUES ($1, $2)
-        RETURNING *;
+      INSERT INTO user_images (employee_no, img64)
+      VALUES ($1, $2)
+      ON CONFLICT (employee_no)
+      DO UPDATE SET img64 = EXCLUDED.img64
+      RETURNING *;
     `;
     const values = [employeeNo, img64];
-
+  
     try {
-        const result = await client.query(query, values);
-        return result.rows[0];
+      const result = await client.query(query, values);
+      return result.rows[0];
     } catch (error) {
-        console.error('Error al guardar la imagen del usuario:', error);
-        throw new Error('Error al guardar la imagen del usuario');
+      console.error('Error al guardar la imagen del usuario:', error);
+      throw new Error('Error al guardar la imagen del usuario');
     }
-};
+  };
+  
 
 const deleteUserImage = async (employeeNo) => {
     const query = `
