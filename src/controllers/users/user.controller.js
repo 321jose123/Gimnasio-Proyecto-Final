@@ -226,14 +226,28 @@ const updateUserFace = async (req, res) => {
   }
 };
 
+/**
+ * Elimina la imagen de un usuario en la base de datos y en el dispositivo.
+ * @function deleteUserImage
+ * @param {Object} req - Request object.
+ * @param {Object} res - Response object.
+ * @returns {Promise<Object>} - Response object with message and data.
+ * @throws {Error} - If there is an error in the service.
+ */
 const deleteUserImage = async (req, res) => {
-  const {employeeNo} = req.body;
+  const { employeeNo } = req.body;
 
   if (!employeeNo || isNaN(employeeNo)) {
     return res.status(400).json({ message: 'employeeNo es obligatorio y debe ser un número válido.' });
   }
 
-  const existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
+  let existingUser;
+  try {
+    existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al buscar el usuario en la base de datos.', error: error.message });
+  }
+
   if (!existingUser) {
     return res.status(404).json({
       message: 'El usuario no existe en la base de datos.',
@@ -241,18 +255,35 @@ const deleteUserImage = async (req, res) => {
     });
   }
 
-  await UserModel.deleteUserImage(employeeNo);
+  try {
+    await UserModel.deleteUserImage(employeeNo);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error al eliminar la imagen del usuario.',
+      error: error.message,
+    });
+  }
 
   const jsonData = {
     "faceLibType":"blackFD",
     "FDID":"1",
     "FPID":employeeNo,
     "deleteFP":true
+  };
+
+  let response;
+  try {
+    response = await apiService.put(API_URL_UPDATE_USER_PROFILE_IMAGE, API_USERNAME, API_PASSWORD, JSON.stringify(jsonData));
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error al eliminar la imagen en el dispositivo.',
+      error: error.message,
+    });
   }
 
-  const response = await apiService.put(API_URL_UPDATE_USER_PROFILE_IMAGE, API_USERNAME, API_PASSWORD, JSON.stringify(jsonData));
   res.status(200).json({ message: 'Imagen eliminada exitosamente', data: response });
-}
+};
+
 
   /**
    * Obtiene la imagen de perfil del usuario en formato JPEG.
