@@ -13,13 +13,11 @@ const { API_USERNAME, API_PASSWORD } = process.env;
 
 /**
  * Busca un usuario en la base de datos y en el dispositivo.
- * @param {Array<String>} EmployeeNoList - Lista de números de empleado.
- * @param {String} fuzzySearch - Búsqueda por patrón.
- * @returns {Object}
- * @property {Boolean} success - Indica si la petición se realizó correctamente.
- * @property {String} message - Mensaje de respuesta.
- * @property {String} source - Origen de la respuesta. Puede ser "database" o "device".
- * @property {Object} data - Usuario encontrado.
+ * @function searchUser
+ * @param {Object} req - Request object.
+ * @param {Object} res - Response object.
+ * @returns {Promise<Object>} - Response object with information about the user.
+ * @throws {Error} - If there is an error in the service.
  */
 const searchUser = async (req, res) => {
   try {
@@ -34,7 +32,16 @@ const searchUser = async (req, res) => {
     }
 
     const firstEmployeeNo = EmployeeNoList[0];
-    const userFromDB = await UserModel.searchUserByEmployeeNo(firstEmployeeNo);
+    let userFromDB;
+    try {
+      userFromDB = await UserModel.searchUserByEmployeeNo(firstEmployeeNo);
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Error al buscar el usuario en la base de datos.",
+        error: error.message,
+      });
+    }
 
     if (userFromDB) {
       return res.status(200).json({
@@ -45,7 +52,16 @@ const searchUser = async (req, res) => {
       });
     }
 
-    const userFromDevice = await findUserInDevice(EmployeeNoList, fuzzySearch);
+    let userFromDevice;
+    try {
+      userFromDevice = await findUserInDevice(EmployeeNoList, fuzzySearch);
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Error al buscar el usuario en el dispositivo.",
+        error: error.message,
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -65,12 +81,13 @@ const searchUser = async (req, res) => {
 
 
 /**
- * Obtiene las capacidades del usuario configuradas en el dispositivo.
- * @returns {Object}
- * @property {Boolean} success - Indica si la petición se realizó correctamente.
- * @property {String} message - Mensaje de respuesta.
- * @property {String} source - Origen de la respuesta. En este caso, siempre es "device".
- * @property {Object} data - Capacidades del usuario.
+ * Obtiene las capacidades del usuario desde el dispositivo.
+ * @async
+ * @function getUserCapabilities
+ * @param {Object} req - Objeto de solicitud.
+ * @param {Object} res - Objeto de respuesta.
+ * @returns {Promise<Object>} - Objeto de respuesta con las capacidades del usuario.
+ * @throws {Error} - Si hay un error al obtener las capacidades del usuario.
  */
 const getUserCapabilities = async (req, res) => {
   try {
@@ -82,7 +99,12 @@ const getUserCapabilities = async (req, res) => {
       data: data
     })
   } catch (error) {
-    res.status(500).send('Error al obtener capacidades del usuario');
+    console.error('Error al obtener capacidades del usuario:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener capacidades del usuario',
+      error: error.message,
+    });
   }
 };
 
