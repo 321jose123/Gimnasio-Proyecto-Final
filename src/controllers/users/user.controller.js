@@ -109,27 +109,51 @@ const getUserCapabilities = async (req, res) => {
 };
 
 /**
- * Actualiza la imagen de perfil del usuario en el dispositivo y la base de datos.
- * @property {String} EmployeeNoList - Un arreglo con al menos un número de empleado.
- * @property {String} img64 - La imagen en base64.
- * @returns {Object}
- * @property {Boolean} success - Indica si la petición se realizó correctamente.
- * @property {String} message - Mensaje de respuesta.
- * @property {Object} data - La respuesta de la API del dispositivo.
+ * Actualiza la imagen de perfil de un usuario.
+ * 
+ * @async
+ * @function updateUserFace
+ * @param {Object} req - Objeto de solicitud, que debe contener en el cuerpo un arreglo `EmployeeNoList` y una cadena `img64`.
+ * @param {Object} res - Objeto de respuesta.
+ * @returns {Promise<void>} - No devuelve un valor, pero envía una respuesta JSON con el resultado.
+ * @throws {Error} - Lanza un error si ocurre algún problema al buscar el usuario, guardar la imagen o comunicarse con la API.
+ * 
+ * El flujo del proceso es el siguiente:
+ * - Verifica la existencia del usuario en la base de datos usando el primer número de empleado en `EmployeeNoList`.
+ * - Si el usuario existe, intenta guardar la imagen proporcionada en base64 (`img64`) en la base de datos.
+ * - Valida la existencia del usuario en el dispositivo externo a través de una llamada a la API.
+ * - Convierte la imagen base64 a un JPEG y la guarda temporalmente.
+ * - Realiza una solicitud POST para actualizar la imagen de perfil del usuario en el dispositivo externo.
+ * - Envía una respuesta JSON indicando el éxito o el fallo del proceso.
+ * - Elimina la imagen temporalmente guardada después de que se haya completado el proceso.
  */
 const updateUserFace = async (req, res) => {
-
   try {
     const { EmployeeNoList = [], img64 } = req.body;
 
     const employeeNo = EmployeeNoList[0];
 
-    const existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
+    let existingUser;
+    try {
+      existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
+    } catch (error) {
+      return res.status(500).json({ message: 'Error al buscar el usuario en la base de datos.', error: error.message });
+    }
+
     if (!existingUser) {
       return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
 
-    const savedImage = await UserModel.saveUserImage(employeeNo, img64);
+    let savedImage;
+    try {
+      savedImage = await UserModel.saveUserImage(employeeNo, img64);
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error al guardar la imagen del usuario.',
+        error: error.message,
+      });
+    }
 
     if (!savedImage) {
       return res.status(500).json({
@@ -138,7 +162,7 @@ const updateUserFace = async (req, res) => {
         details: process.env.NODE_ENV === 'production' ? undefined : 'Revisa el formato de la imagen o verifica los permisos del sistema de almacenamiento.',
         timestamp: new Date().toISOString(),
       });
-          }
+    }
 
     const jsonData = {
       UserInfoSearchCond: {
@@ -149,7 +173,12 @@ const updateUserFace = async (req, res) => {
       },
     };
 
-    const UserValidateResponse = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
+    let UserValidateResponse;
+    try {
+      UserValidateResponse = await apiService.post(API_URL_SEARCH_USER, API_USERNAME, API_PASSWORD, jsonData, "application/json");
+    } catch (error) {
+      return res.status(500).json({ message: 'Error al validar el usuario.', error: error.message });
+    }
 
     if (!UserValidateResponse || !UserValidateResponse.UserInfoSearch) {
       return res.status(500).json({ message: 'Respuesta inválida de la API de validación de usuario.' });
@@ -160,6 +189,7 @@ const updateUserFace = async (req, res) => {
     if (responseStatusStrg !== 'OK') {
       return res.status(400).json({ message: 'Error en la validación del usuario' });
     }
+
     const jpegBuffer = Buffer.from(img64, 'base64');
     const tempImagePath = path.join(__dirname, 'tempImage.jpg');
     fs.writeFileSync(tempImagePath, jpegBuffer);
@@ -170,32 +200,29 @@ const updateUserFace = async (req, res) => {
       FPID: EmployeeNoList[0],
     };
 
+    let apiResponse;
     try {
-      const apiResponse = await apiServiceImage.post(
+      apiResponse = await apiServiceImage.post(
         API_URL_UPDATE_USER_PROFILE_IMAGE,
         API_USERNAME,
         API_PASSWORD,
         JSON.stringify(faceDataRecord),
         tempImagePath
       );
-
-      res.status(200).json({ 
-        success: true,
-        message: 'Actualización exitosa', 
-        data: apiResponse });
     } catch (error) {
-      console.error('Error en la actualización:', error);
-      res.status(500).json({ message: 'Error en la actualización de la imagen.' });
-    } finally {
-      if (fs.existsSync(tempImagePath)) {
-        fs.unlinkSync(tempImagePath);
-        console.log('Temporary image removed.');
-      }
+      console.error('Error al actualizar la imagen en el dispositivo:', error);
+      res.status(500).json({ message: 'Error al actualizar la imagen en el dispositivo.', error: error.message });
+    }
+
+    res.status(200).json({ success: true, message: 'Actualización exitosa', data: apiResponse });
+
+    if (fs.existsSync(tempImagePath)) {
+      fs.unlinkSync(tempImagePath);
     }
 
   } catch (error) {
-    console.error('Error in updateUserFace:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
+    console.error('Error en updateUserFace:', error);
+    res.status(500).json({ message: 'Error interno del servidor.', error: error.message });
   }
 };
 
