@@ -19,7 +19,8 @@ const buildUserObjects = (data) => {
     state,
     postalCode,
     country,
-    dateOfBirth
+    dateOfBirth,
+    active = true
   } = data;
 
   const { beginTime, endTime } = Valid || {};
@@ -54,6 +55,7 @@ const buildUserObjects = (data) => {
     postalCode,
     country,
     dateOfBirth: formatToUTC(dateOfBirth),
+    active
   };
 
   const jsonData = {

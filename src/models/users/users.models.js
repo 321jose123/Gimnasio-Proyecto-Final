@@ -67,6 +67,7 @@ const createUser = async (userInfo) => {
         city,
         country,
         dateOfBirth,
+        active
     } = userInfo;
 
     const doorNo = RightPlan && RightPlan[0] ? RightPlan[0].doorNo : null;
@@ -78,13 +79,13 @@ const createUser = async (userInfo) => {
           valid_enable, valid_begin_time, valid_end_time,
           door_no, plan_template_no,
           local_ui_user_type, user_verify_mode, add_user, gender,
-          email, phone_number, address, city, country, date_of_birth
+          email, phone_number, address, city, country, date_of_birth, active
       ) VALUES (
           $1, $2, $3, $4,
           $5, $6, $7,
           $8, $9,
           $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19
+          $14, $15, $16, $17, $18, $19, $20
       )
       RETURNING *;
     `;
@@ -109,6 +110,7 @@ const createUser = async (userInfo) => {
         city,
         country,
         dateOfBirth,
+        active
     ];
 
     try {
@@ -123,6 +125,24 @@ const createUser = async (userInfo) => {
         throw new Error('Error al crear el usuario');
     }
 };
+
+const updateUserStatus = async (employeeNo, status) => {
+    const query = `
+      UPDATE users
+      SET active = $1
+      WHERE employee_no = $2
+      RETURNING *;
+    `;
+    const values = [status, employeeNo];
+  
+    try {
+      const result = await client.query(query, values);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error al actualizar el estado del usuario:', error);
+      throw new Error('Error al actualizar el estado del usuario');
+    }
+}
 
 /**
  * Inserta o actualiza la imagen del usuario en la tabla user_images.
@@ -242,6 +262,7 @@ const deleteUserByEmployeeNo = async (employeeNo) => {
 
 module.exports = {
     createUser,
+    updateUserStatus,
     getUserImage,
     saveUserImage,
     deleteUserImage,

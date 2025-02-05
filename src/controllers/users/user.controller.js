@@ -3,7 +3,7 @@ const path = require('path');
 const sharp = require('sharp');
 const { apiService, apiServiceImage } = require('../../services/apiServices');
 const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE } = require('../../../config');
-const { validateDateRange } = require('../../helpers/validate.helpers');
+const { validateDateRange, formatToUTC } = require('../../helpers/validate.helpers');
 const UserModel = require('../../models/users/users.models');
 const { findUserInDevice } = require('../../services/userServices/findUserInDevice');
 const { handleError } = require('../../services/errors/handleErrors');
@@ -327,6 +327,163 @@ const addUserInfo = async (req, res) => {
   }
 };
 
+const updateUserStatus = async (req, res) => {
+  try {
+    const { employeeNo, status } = req.body;
+
+    const user = await UserModel.searchUserByEmployeeNo(employeeNo);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    if (status) {
+      const { 
+        employee_no, name, user_type, door_right, local_ui_user_type, user_verify_mode, 
+        add_user, gender, valid_enable, valid_begin_time, valid_end_time, door_no, 
+        plan_template_no, email, phone_number, address, city, country, date_of_birth
+      } = user;
+      
+      const jsonData = {
+        userInfo: {
+          employeeNo: employee_no,
+          name: name,
+          userType: user_type || "normal",
+          Valid: {
+            enable: valid_enable,
+            beginTime: formatToUTC(valid_begin_time),
+            endTime: formatToUTC(valid_end_time),
+          },
+          doorRight: door_right || "1",
+          RightPlan: [
+            {
+              doorNo: door_no || 1,
+              planTemplateNo: plan_template_no || "1",
+            }
+          ],
+          localUIUserType: local_ui_user_type || "admin",
+          userVerifyMode: user_verify_mode || "faceOrFpOrCardOrPw",
+          checkUser: true,
+          terminalNoList: [1],
+          addUser: add_user || true,
+        }
+      };
+      
+      let response;
+      try {
+        response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
+        console.log('Usuario creado en el dispositivo:', response);
+      } catch (apiError) {
+        console.error('Error: el usuario ya existe en el dispositivo:', apiError);
+        return res.status(409).json({
+          message: 'Error: el usuario ya existe en el dispositivo.',
+          data: {
+            statusCode: 6,
+            statusString: 'Invalid Content',
+            subStatusCode: 'employeeNoAlreadyExist',
+            errorCode: 1610637344,
+            errorMsg: 'checkUser'
+          }
+        });
+      }
+      
+      let img64 = null;
+      try {
+        const imagerecord = await UserModel.getUserImage(employeeNo);
+        img64 = imagerecord?.img64 || null;
+      } catch (imageError) {
+        console.error('Error al obtener la imagen del usuario:', imageError);
+      }
+
+      if (img64 && typeof img64 === 'string' && img64.trim() !== '') {
+        const tempImagePath = path.join('/tmp', `tempImage_${employeeNo}_${Date.now()}.jpg`);
+
+        try {
+          const imgBuffer = Buffer.from(img64, 'base64');
+          fs.writeFileSync(tempImagePath, imgBuffer);
+        } catch (fileError) {
+          console.error('Error al escribir la imagen en el archivo temporal:', fileError);
+          return res.status(500).json({
+            message: 'Error al guardar la imagen temporal.',
+            error: fileError.message,
+          });
+        }
+
+        const faceDataRecord = {
+          faceLibType: "blackFD",
+          FDID: "1",
+          FPID: employeeNo,
+        };
+
+        try {
+          const apiResponse = await apiServiceImage.post(
+            API_URL_UPDATE_USER_PROFILE_IMAGE,
+            API_USERNAME,
+            API_PASSWORD,
+            JSON.stringify(faceDataRecord),
+            tempImagePath
+          );
+          console.log('Imagen actualizada en el dispositivo:', apiResponse);
+        } catch (apiError) {
+          console.error('Error al actualizar la imagen en el dispositivo:', apiError);
+          return res.status(500).json({
+            message: 'Error al actualizar la imagen en el dispositivo.',
+            error: apiError.message,
+          });
+        }
+
+        try {
+          if (fs.existsSync(tempImagePath)) {
+            fs.unlinkSync(tempImagePath);
+            console.log('Imagen temporal eliminada.');
+          }
+        } catch (deleteError) {
+          console.error('Error al eliminar la imagen temporal:', deleteError);
+        }
+      }
+
+    } else {
+      const jsonData = {
+        UserInfoDelCond: {
+          EmployeeNoList: [{ employeeNo: employeeNo }],
+          operateType: "byTerminal",
+          terminalNoList: [1]
+        }
+      };
+
+      let deleteResponse;
+      try {
+        deleteResponse = await apiService.put(API_URL_DELETE_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
+        console.log('Usuario eliminado del dispositivo:', deleteResponse);
+      } catch (deleteError) {
+        console.error('Error al eliminar el usuario del dispositivo:', deleteError);
+        return res.status(500).json({
+          message: 'Error al eliminar el usuario del dispositivo.',
+          error: deleteError.message,
+        });
+      }
+    }
+
+    let updatedUser;
+    try {
+      updatedUser = await UserModel.updateUserStatus(employeeNo, status);
+      res.status(200).json({ message: 'Estado del usuario actualizado exitosamente.', data: updatedUser });
+    } catch (updateError) {
+      console.error('Error al actualizar el estado del usuario en la base de datos:', updateError);
+      return res.status(500).json({
+        message: 'Error al actualizar el estado del usuario en la base de datos.',
+        error: updateError.message,
+      });
+    }
+
+  } catch (error) {
+    console.error('Error en updateUserStatus:', error);
+    res.status(500).json({
+      message: 'Error interno del servidor.',
+      error: error.message,
+    });
+  }
+};
+
 /**
  * Elimina un usuario de la base de datos y el dispositivo.
  * @property {String} employeeNo - Número de empleado del usuario a eliminar.
@@ -384,8 +541,9 @@ module.exports = {
   getUserCapabilities,
   deleteUser,
   addUserInfo,
+  updateUserStatus,
   searchUser,
   updateUserFace,
   deleteUserImage,
-  getUserImageAsJPEG
+  getUserImageAsJPEG,
 };
