@@ -6,11 +6,17 @@ const { insertEvent } = require('../../models/events/events.models');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
-const hora_inicio = `${new Date().toISOString().split('T')[0]}T${HORARIO_EMPRESA_INICIO}`;
-const hora_final = `${new Date().toISOString().split('T')[0]}T${HORARIO_EMPRESA_FIN}`;
+const searchID = `consulta_eventos`;
 
-const hora_inicio_utc = formatToUTC(hora_inicio);
-const hora_final_utc = formatToUTC(hora_final);
+const { DateTime } = require("luxon");
+
+const ahora = DateTime.now().setZone("America/Bogota");
+const inicioDia = ahora.startOf("day").toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+const finDia = ahora.endOf("day").toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+
+const hora_inicio_utc = inicioDia;
+const hora_final_utc = finDia;
+
 
 /**
  * Captura los eventos del dispositivo de la empresa, desde la hora de inicio de la empresa hasta la hora de fin.
@@ -23,7 +29,7 @@ const eventsCapture = async (req, res) => {
     try {
         const jsondata = {
             "AcsEventCond": {
-                "searchID": "prueba",
+                "searchID": searchID,
                 "searchResultPosition": 0,
                 "maxResults": 10,
                 "major": 0,

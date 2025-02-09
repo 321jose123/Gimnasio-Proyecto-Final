@@ -16,7 +16,7 @@ module.exports = {
   //* Horario empresa
 
   HORARIO_EMPRESA_INICIO: '00:00:00',
-  HORARIO_EMPRESA_FIN: '23:00:00',
+  HORARIO_EMPRESA_FIN: '23:59:59',
   
     //TODO: ENDPOINTS EVENTOS DEL DISPOSITIVO
 
