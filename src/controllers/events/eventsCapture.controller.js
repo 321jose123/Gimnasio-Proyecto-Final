@@ -23,7 +23,7 @@ const eventsCapture = async (req, res) => {
             "AcsEventCond": {
                 "searchID": "prueba",
                 "searchResultPosition": 0,
-                "maxResults": 24,
+                "maxResults": 10,
                 "major": 0,
                 "minor": 0,
                 "startTime": hora_inicio_utc,
@@ -47,20 +47,31 @@ const eventsCapture = async (req, res) => {
         }
 
         if (eventsUserCapture && eventsUserCapture.AcsEvent && eventsUserCapture.AcsEvent.InfoList) {
-            const eventosFiltrados = eventsUserCapture.AcsEvent.InfoList.filter(evento => evento.employeeNoString);
+
+            const eventosValidos = eventsUserCapture.AcsEvent.InfoList.filter(evento => evento.employeeNoString);
+
+            const eventosInvalidos = eventsUserCapture.AcsEvent.InfoList.filter(evento => !evento.employeeNoString);
 
             return res.status(200).json({ 
                 status: 'success',
                 message: 'Mostrando lista de eventos capturados',
-                totalEventos: eventosFiltrados.length,
-                data: eventosFiltrados,
+                totalEventos: eventsUserCapture.AcsEvent.InfoList.length,
+                eventosValidos: {
+                    total: eventosValidos.length,
+                    data: eventosValidos
+                },
+                eventosInvalidos: {
+                    total: eventosInvalidos.length,
+                    data: eventosInvalidos
+                }
             });
         } else {
             return res.status(200).json({
                 status: 'success',
                 message: 'No hay eventos registrados para el rango de tiempo solicitado.',
                 totalEventos: 0,
-                data: [],
+                eventosValidos: { total: 0, data: [] },
+                eventosInvalidos: { total: 0, data: [] }
             });
         }
 
