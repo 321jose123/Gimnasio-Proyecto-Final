@@ -1,3 +1,5 @@
+const { formatToUTC } = require('./src/helpers/validate.helpers');
+
 require('dotenv').config();
 
 const BASE_URL = process.env.BASE_URL || 'http://192.168.1.11';
@@ -10,6 +12,13 @@ module.exports = {
   db_user: 'postgres',
   db_password: '2520',
   db_database: 'DB_HK_CSE',
+
+  //* Horario empresa
+
+  HORARIO_EMPRESA_INICIO: '06:00:00',
+  HORARIO_EMPRESA_FIN: '23:00:00',
+  
+  
 
     //TODO: ENDPOINTS DE USUARIOS CONEXIÓN CON MAQUINA
 
