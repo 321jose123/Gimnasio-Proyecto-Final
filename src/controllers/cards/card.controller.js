@@ -1,5 +1,6 @@
 const { apiService } = require('../../services/apiServices');
-const { API_URL_DELETE_CARD, API_URL_GET_CARD_ID, API_URL_ADD_CARD_TO_USER, API_URL_GET_CARD_FROM_USER } = require('../../../config')
+const { API_URL_DELETE_CARD, API_URL_GET_CARD_ID, API_URL_ADD_CARD_TO_USER, API_URL_GET_CARD_FROM_USER } = require('../../../config');
+const { saveCardToUser, getCardFromUser, deleteCardFromUser } = require('../../models/cards/cards.models');
 
 const getUserCardId = async (req, res) => {
   try {
@@ -35,12 +36,18 @@ const addCardToUser = async (req, res) => {
       }
     };
 
-
     const data = await apiService.post(API_URL_ADD_CARD_TO_USER, API_USERNAME, API_PASSWORD, dataParse, 'application/json');
     console.log(employeeNo);
-    res.json(data);
+
+    try {
+      const card = await saveCardToUser(employeeNo, cardNo, deleteCard, cardType, checkCardNo, checkEmployeeNo, addCard);
+      res.json(card);
+    } catch (error) {
+      res.status(500).send('Error al agregar la tarjeta al usuario' + error);
+    }
+
   } catch (error) {
-    return res.status(500).send('Error al actualizar el registro de tarjeta');
+    res.status(500).send('Error al actualizar el registro de tarjeta' + error);
   }
 }
 

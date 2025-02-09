@@ -3,11 +3,12 @@ const path = require('path');
 const sharp = require('sharp');
 const { apiService, apiServiceImage } = require('../../services/apiServices');
 const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE } = require('../../../config');
-const { validateDateRange, formatToUTC } = require('../../helpers/validate.helpers');
+const { validateDateRange } = require('../../helpers/validate.helpers');
 const UserModel = require('../../models/users/users.models');
 const { findUserInDevice } = require('../../services/userServices/findUserInDevice');
 const { handleError } = require('../../services/errors/handleErrors');
 const { buildUserObjects } = require('../../services/userServices/buildUserObjet');
+const { createUserInDevice, handleUserCards, handleUserProfileImage, deleteUserFromDevice } = require('../../services/userServices/buildUserDevice');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -407,157 +408,72 @@ const addUserInfo = async (req, res) => {
   }
 };
 
+/**
+ * Actualiza el estado de un usuario en la base de datos y el dispositivo.
+ *
+ * @async
+ * @function updateUserStatus
+ * @param {Object} req - Objeto de solicitud, que debe contener en el cuerpo el número de empleado (`employeeNo`) y el nuevo estado (`status`).
+ * @param {Object} res - Objeto de respuesta.
+ * @returns {Promise<void>} - No devuelve un valor, pero envía una respuesta JSON con el resultado.
+ * @throws {Error} - Lanza un error si ocurre algún problema al buscar el usuario, actualizar el usuario en el dispositivo, manejar tarjetas, manejar la imagen de perfil, o actualizar el estado del usuario en la base de datos.
+ *
+ * El flujo del proceso es el siguiente:
+ * - Verifica la existencia del usuario en la base de datos usando el número de empleado.
+ * - Si el usuario existe y el estado es `true`, intenta crear o actualizar el usuario en el dispositivo, manejar tarjetas y manejar la imagen de perfil.
+ * - Si el estado es `false`, intenta eliminar el usuario del dispositivo.
+ * - Actualiza el estado del usuario en la base de datos.
+ * - Envía una respuesta JSON indicando el éxito o el fallo del proceso.
+ */
+
 const updateUserStatus = async (req, res) => {
   try {
     const { employeeNo, status } = req.body;
 
+    // Buscar al usuario por su número de empleado
     const user = await UserModel.searchUserByEmployeeNo(employeeNo);
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
 
     if (status) {
-      const { 
-        employee_no, name, user_type, door_right, local_ui_user_type, user_verify_mode, 
-        add_user, gender, valid_enable, valid_begin_time, valid_end_time, door_no, 
-        plan_template_no, email, phone_number, address, city, country, date_of_birth
-      } = user;
-      
-      const jsonData = {
-        userInfo: {
-          employeeNo: employee_no,
-          name: name,
-          userType: user_type || "normal",
-          Valid: {
-            enable: valid_enable,
-            beginTime: formatToUTC(valid_begin_time),
-            endTime: formatToUTC(valid_end_time),
-          },
-          doorRight: door_right || "1",
-          RightPlan: [
-            {
-              doorNo: door_no || 1,
-              planTemplateNo: plan_template_no || "1",
-            }
-          ],
-          localUIUserType: local_ui_user_type || "admin",
-          userVerifyMode: user_verify_mode || "faceOrFpOrCardOrPw",
-          checkUser: true,
-          terminalNoList: [1],
-          addUser: add_user || true,
-        }
-      };
-      
-      let response;
-      try {
-        response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
-        console.log('Usuario creado en el dispositivo:', response);
-      } catch (apiError) {
-        console.error('Error: el usuario ya existe en el dispositivo:', apiError);
-        return res.status(409).json({
-          message: 'Error: el usuario ya existe en el dispositivo.',
-          data: {
-            statusCode: 6,
-            statusString: 'Invalid Content',
-            subStatusCode: 'employeeNoAlreadyExist',
-            errorCode: 1610637344,
-            errorMsg: 'checkUser'
-          }
-        });
-      }
-      
-      let img64 = null;
-      try {
-        const imagerecord = await UserModel.getUserImage(employeeNo);
-        img64 = imagerecord?.img64 || null;
-      } catch (imageError) {
-        console.error('Error al obtener la imagen del usuario:', imageError);
+      // Crear o actualizar el usuario en el dispositivo
+      const createUserResponse = await createUserInDevice(user);
+      if (createUserResponse.error) {
+        return res.status(createUserResponse.statusCode || 500).json(createUserResponse);
       }
 
-      if (img64 && typeof img64 === 'string' && img64.trim() !== '') {
-        const tempImagePath = path.join('/tmp', `tempImage_${employeeNo}_${Date.now()}.jpg`);
-
-        try {
-          const imgBuffer = Buffer.from(img64, 'base64');
-          fs.writeFileSync(tempImagePath, imgBuffer);
-        } catch (fileError) {
-          console.error('Error al escribir la imagen en el archivo temporal:', fileError);
-          return res.status(500).json({
-            message: 'Error al guardar la imagen temporal.',
-            error: fileError.message,
-          });
-        }
-
-        const faceDataRecord = {
-          faceLibType: "blackFD",
-          FDID: "1",
-          FPID: employeeNo,
-        };
-
-        try {
-          const apiResponse = await apiServiceImage.post(
-            API_URL_UPDATE_USER_PROFILE_IMAGE,
-            API_USERNAME,
-            API_PASSWORD,
-            JSON.stringify(faceDataRecord),
-            tempImagePath
-          );
-          console.log('Imagen actualizada en el dispositivo:', apiResponse);
-        } catch (apiError) {
-          console.error('Error al actualizar la imagen en el dispositivo:', apiError);
-          return res.status(500).json({
-            message: 'Error al actualizar la imagen en el dispositivo.',
-            error: apiError.message,
-          });
-        }
-
-        try {
-          if (fs.existsSync(tempImagePath)) {
-            fs.unlinkSync(tempImagePath);
-            console.log('Imagen temporal eliminada.');
-          }
-        } catch (deleteError) {
-          console.error('Error al eliminar la imagen temporal:', deleteError);
-        }
+      
+      // Manejar la imagen del perfil del usuario
+      const imageResponse = await handleUserProfileImage(employeeNo);
+      if (imageResponse.error) {
+        return res.status(imageResponse.statusCode || 500).json(imageResponse);
       }
-
+      
+      // Manejar las tarjetas del usuario
+      const cardResponse = await handleUserCards(employeeNo);
+      if (cardResponse.error) {
+        return res.status(cardResponse.statusCode || 500).json(cardResponse);
+      }
     } else {
-      const jsonData = {
-        UserInfoDelCond: {
-          EmployeeNoList: [{ employeeNo: employeeNo }],
-          operateType: "byTerminal",
-          terminalNoList: [1]
-        }
-      };
-
-      let deleteResponse;
-      try {
-        deleteResponse = await apiService.put(API_URL_DELETE_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
-        console.log('Usuario eliminado del dispositivo:', deleteResponse);
-      } catch (deleteError) {
-        console.error('Error al eliminar el usuario del dispositivo:', deleteError);
-        return res.status(500).json({
-          message: 'Error al eliminar el usuario del dispositivo.',
-          error: deleteError.message,
-        });
+      // Eliminar el usuario del dispositivo
+      const deleteResponse = await deleteUserFromDevice(employeeNo);
+      if (deleteResponse.error) {
+        return res.status(deleteResponse.statusCode || 500).json(deleteResponse);
       }
     }
 
-    let updatedUser;
-    try {
-      updatedUser = await UserModel.updateUserStatus(employeeNo, status);
-      res.status(200).json({ message: 'Estado del usuario actualizado exitosamente.', data: updatedUser });
-    } catch (updateError) {
-      console.error('Error al actualizar el estado del usuario en la base de datos:', updateError);
-      return res.status(500).json({
-        message: 'Error al actualizar el estado del usuario en la base de datos.',
-        error: updateError.message,
-      });
-    }
+    // Actualizar el estado del usuario en la base de datos
+    const updatedUser = await UserModel.updateUserStatus(employeeNo, status);
 
+    // Respuesta final
+    return res.status(200).json({
+      message: 'Estado del usuario actualizado exitosamente.',
+      data: updatedUser,
+    });
   } catch (error) {
     console.error('Error en updateUserStatus:', error);
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Error interno del servidor.',
       error: error.message,
     });
