@@ -1,6 +1,8 @@
 const { HORARIO_EMPRESA_INICIO, HORARIO_EMPRESA_FIN, API_URL_DEVICE_EVENTS } = require('../../../config');
 const { formatToUTC } = require('../../helpers/validate.helpers');
 const { apiService } = require('../../services/apiServices');
+const { insertEvent } = require('../../models/events/events.models');
+
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -11,11 +13,11 @@ const hora_inicio_utc = formatToUTC(hora_inicio);
 const hora_final_utc = formatToUTC(hora_final);
 
 /**
- * Captura los eventos del dispositivo desde la hora de inicio del horario de la empresa hasta la hora final del horario de la empresa.
- * @param {Object} req - Objeto de solicitud.
- * @param {Object} res - Objeto de respuesta.
- * @returns {Promise<Object>} - Objeto de respuesta con la lista de eventos capturados.
- * @throws {Error} - Si hay un error al capturar eventos del dispositivo.
+ * Captura los eventos del dispositivo de la empresa, desde la hora de inicio de la empresa hasta la hora de fin.
+ * Luego, almacena cada evento en la base de datos.
+ * @param {Object} req - Información de la solicitud.
+ * @param {Object} res - Información de la respuesta.
+ * @returns {Promise<Object>} - Información de la respuesta, con status, message y data.
  */
 const eventsCapture = async (req, res) => {
     try {
@@ -46,11 +48,25 @@ const eventsCapture = async (req, res) => {
             });
         }
 
-        if (eventsUserCapture && eventsUserCapture.AcsEvent && eventsUserCapture.AcsEvent.InfoList) {
-
+        if (eventsUserCapture?.AcsEvent?.InfoList) {
             const eventosValidos = eventsUserCapture.AcsEvent.InfoList.filter(evento => evento.employeeNoString);
 
             const eventosInvalidos = eventsUserCapture.AcsEvent.InfoList.filter(evento => !evento.employeeNoString);
+
+            for (const evento of eventosValidos) {
+                await insertEvent({
+                    employee_no: evento.employeeNoString,
+                    nombre: evento.name,
+                    card_no: evento.cardNo || null,
+                    timestamp: evento.time,
+                    door_no: evento.doorNo,
+                    serial_no: evento.serialNo,
+                    user_type: evento.userType || null,
+                    verify_mode: evento.currentVerifyMode || null,
+                    mask_status: evento.mask || null,
+                    picture_url: evento.pictureURL || null
+                });
+            }
 
             return res.status(200).json({ 
                 status: 'success',
