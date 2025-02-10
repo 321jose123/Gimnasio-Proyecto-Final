@@ -1,5 +1,4 @@
-const { HORARIO_EMPRESA_INICIO, HORARIO_EMPRESA_FIN, API_URL_DEVICE_EVENTS } = require('../../../config');
-const { formatToUTC } = require('../../helpers/validate.helpers');
+const { API_URL_DEVICE_EVENTS } = require('../../../config');
 const { apiService } = require('../../services/apiServices');
 const { insertEvent } = require('../../models/events/events.models');
 

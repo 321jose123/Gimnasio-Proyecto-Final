@@ -14,6 +14,7 @@ const corsOptions = {
 //Mostrar estructura de directorio
 const directoryPath = __dirname;
 const { showDirectoryTreeIfEnabled } = require('./controllers/showDirectoryTreeIfEnabled');
+const { startEventScheduler } = require('./controllers/events/eventsScheduler');
 showDirectoryTreeIfEnabled(directoryPath);
 
 //Middleware para leer body de request y limitarlo
@@ -28,6 +29,9 @@ const port = process.env.PORT || 3000;
 
 //Iniciar conexión a la base de datos
 connectDB();
+
+//* Sincronizador de eventos del dispositivo
+startEventScheduler();
 
 //Rutas
 app.use('/api', userRoutes)

@@ -1,10 +1,16 @@
-const { formatToUTC } = require('./src/helpers/validate.helpers');
-
 require('dotenv').config();
 
 const BASE_URL = process.env.BASE_URL || 'http://192.168.1.11';
+const SYNC_KEY = process.env.SYNC_KEY;
+
 
 module.exports = {
+  
+  //* INICIAR SINCRONIZACIÓN
+  START_SYNC : SYNC_KEY,
+  
+  //* TIEMPO DE SINCRONIZACIÓN
+  TIME_SYNC : 10,
 
   //TODO: CONEXIÓN CON DATABASE CONFIG
   db_host: '192.168.1.57',
