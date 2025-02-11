@@ -52,9 +52,6 @@ const validateAddUser = [
         .exists().withMessage('name es requerido')
         .not().isEmpty().withMessage('name no debe estar vacío')
         .isString().withMessage('name debe ser un string'),
-    check('userType')
-        .exists().withMessage('userType es requerido')
-        .isIn(['normal', 'visitor', 'blackList']).withMessage('userType debe ser normal, visitor o blackList'),
     check('doorRight')
         .exists().withMessage('doorRight es requerido')
         .isString().withMessage('doorRight debe ser un string'),

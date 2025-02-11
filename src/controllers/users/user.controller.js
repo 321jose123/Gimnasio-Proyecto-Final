@@ -388,8 +388,8 @@ const addUserInfo = async (req, res) => {
       });
     }
 
+    try {
     const newUser = await UserModel.createUser(userData);
-
     const response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
 
     res.status(200).json({
@@ -398,7 +398,13 @@ const addUserInfo = async (req, res) => {
         response
       },
     });
-
+    } catch (error) {
+      console.error('Error al agregar el usuario:', error);
+      res.status(500).json({
+        message: 'Error interno del servidor al agregar usuario',
+        error: error.message,
+      });
+    }
   } catch (error) {
     handleError(res, error, 'Error al agregar usuario');
     res.status(500).json({
