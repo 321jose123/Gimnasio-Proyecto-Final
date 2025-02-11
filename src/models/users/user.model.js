@@ -76,7 +76,19 @@ const createUser = async (userInfo) => {
 
 };
 
+const searchCardByCardNo = async (cardNo) => {
+    const query = `
+        SELECT * FROM user_cards
+        WHERE card_no = $1
+    `;
+    const values = [cardNo];
+    const result = await client.query(query, values);
+    return result.rows[0];
+};
+
+
 module.exports = {
     createUser,
-    searchUserByEmployeeNo
+    searchUserByEmployeeNo,
+    searchCardByCardNo
 };

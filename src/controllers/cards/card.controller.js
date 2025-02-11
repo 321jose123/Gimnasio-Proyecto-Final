@@ -1,6 +1,7 @@
 const { apiService } = require('../../services/apiServices');
 const { API_URL_DELETE_CARD, API_URL_GET_CARD_ID, API_URL_ADD_CARD_TO_USER, API_URL_GET_CARD_FROM_USER } = require('../../../config');
 const { saveCardToUser, getCardFromUser, deleteCardFromUser } = require('../../models/cards/cards.models');
+const { searchCardByCardNo } = require('../../models/users/user.model');
 
 const getUserCardId = async (req, res) => {
   try {
@@ -103,9 +104,41 @@ const deleteUsercard = async (req, res) => {
   }
 };
 
+/**
+ * Maneja eventos inválidos, es decir, aquellos que no se pudieron asociar a un usuario.
+ * Intenta buscar un usuario con la tarjeta asociada al evento, y si no lo encuentra,
+ * registra el evento como inválido.
+ * @param {Set} eventosSet - Set de eventos que no se pudieron asociar a un usuario.
+ */
+const handleInvalidEvent = async (eventosSet) => {
+  try {
+    const eventosArray = Array.from(eventosSet);
+
+    while (eventosArray.length > 0) {
+      const evento = eventosArray.shift();
+
+      const cardNo = evento
+
+      console.log("Procesando evento con tarjeta:", cardNo);
+
+      const userWithSameCard = await searchCardByCardNo(cardNo);
+
+      if (userWithSameCard) {
+          console.log(`Ya existe un usuario con la tarjeta ${cardNo}:`, userWithSameCard);
+      } else {
+          console.log(`No se encontró ningún usuario con la tarjeta ${cardNo}. Evento registrado como inválido.`);
+      }
+    }
+} catch (error) {
+    console.error("Error al manejar eventos inválidos:", error.message);
+}
+};
+
+
 module.exports = { 
   getUserCardId, 
   deleteUsercard, 
   addCardToUser, 
-  getCardIdFromUser 
+  getCardIdFromUser,
+  handleInvalidEvent
 };

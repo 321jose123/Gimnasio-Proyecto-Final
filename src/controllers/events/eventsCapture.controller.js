@@ -8,6 +8,7 @@ const { API_USERNAME, API_PASSWORD } = process.env;
 const searchID = `consulta_eventos`;
 
 const { DateTime } = require("luxon");
+const { handleInvalidEvent } = require('../cards/card.controller');
 
 const ahora = DateTime.now().setZone("America/Bogota");
 const inicioDia = ahora.startOf("day").toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
@@ -58,6 +59,8 @@ const eventsCapture = async (req, res) => {
 
             const eventosInvalidos = eventsUserCapture.AcsEvent.InfoList.filter(evento => !evento.employeeNoString);
 
+            const eventosConTarjeta = new Set();
+
             for (const evento of eventosValidos) {
                 await insertEvent({
                     employee_no: evento.employeeNoString,
@@ -72,6 +75,14 @@ const eventsCapture = async (req, res) => {
                     picture_url: evento.pictureURL || null
                 });
             }
+
+            for (const evento of eventosInvalidos) {
+                if (evento.cardNo) {
+                    eventosConTarjeta.add((evento.cardNo));
+                }
+            }
+
+            handleInvalidEvent(eventosConTarjeta)
 
             return res.status(200).json({ 
                 status: 'success',
