@@ -165,10 +165,12 @@ const searchCardByCardNo = async (cardNo) => {
 };
 
 
+
 module.exports = {
     createUser,
     searchUserByEmployeeNo,
     searchCardByCardNo,
     getUserAccessCount,
     decrementUserAccess,
+    updateUserStatus
 };

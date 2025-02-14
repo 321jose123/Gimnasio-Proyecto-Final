@@ -5,6 +5,7 @@ const { API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_UPDATE_USER_PROFILE_IMAGE
 const UserModel = require('../../models/users/users.models');
 const { formatToUTC } = require('../../helpers/validate.helpers');
 const { getCardFromUser } = require('../../models/cards/cards.models');
+const { getUserImage } = require('../../models/users/userImage.model');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -100,7 +101,7 @@ const handleUserCards = async (employeeNo) => {
 // Función para manejar la imagen del perfil del usuario
 const handleUserProfileImage = async (employeeNo) => {
   try {
-    const imagerecord = await UserModel.getUserImage(employeeNo);
+    const imagerecord = await getUserImage(employeeNo);
     const img64 = imagerecord?.img64 || null;
 
     if (img64 && typeof img64 === 'string' && img64.trim() !== '') {
