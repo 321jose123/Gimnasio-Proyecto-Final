@@ -1,8 +1,7 @@
 const { API_URL_DEVICE_EVENTS } = require('../../../config');
 const { apiService } = require('../../services/apiServices');
 const { insertEvent } = require('../../models/events/events.models');
-
-
+const { getUserAccessCount, decrementUserAccess } = require('../../models/users/user.model');
 const { API_USERNAME, API_PASSWORD } = process.env;
 
 const searchID = `consulta_eventos`;
@@ -17,14 +16,6 @@ const finDia = ahora.endOf("day").toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
 const hora_inicio_utc = inicioDia;
 const hora_final_utc = finDia;
 
-
-/**
- * Captura los eventos del dispositivo de la empresa, desde la hora de inicio de la empresa hasta la hora de fin.
- * Luego, almacena cada evento en la base de datos.
- * @param {Object} req - Información de la solicitud.
- * @param {Object} res - Información de la respuesta.
- * @returns {Promise<Object>} - Información de la respuesta, con status, message y data.
- */
 const eventsCapture = async (req, res) => {
     try {
         const jsondata = {
@@ -62,7 +53,7 @@ const eventsCapture = async (req, res) => {
             const eventosConTarjeta = new Set();
 
             for (const evento of eventosValidos) {
-                await insertEvent({
+                const eventInserted = await insertEvent({
                     employee_no: evento.employeeNoString,
                     nombre: evento.name,
                     card_no: evento.cardNo || null,
@@ -74,15 +65,32 @@ const eventsCapture = async (req, res) => {
                     mask_status: evento.mask || null,
                     picture_url: evento.pictureURL || null
                 });
+
+                if (!eventInserted) {
+                    continue;
+                }
+
+                const accesosDisponibles = await getUserAccessCount(evento.employeeNoString);
+
+                if (accesosDisponibles > 0) {
+                    console.log(`✅ Usuario ${evento.employeeNoString} tiene ${accesosDisponibles} accesos disponibles.`);
+                    
+                    // Descontar un acceso disponible
+                    await decrementUserAccess(evento.employeeNoString);
+                    console.log(`🔽 Se descontó 1 acceso al usuario ${evento.employeeNoString}. Le quedan ${accesosDisponibles - 1}.`);
+
+                } else {
+                    console.log(`⛔ Usuario ${evento.employeeNoString} no tiene accesos disponibles. Evento registrado pero sin descuento.`);
+                }
             }
 
             for (const evento of eventosInvalidos) {
                 if (evento.cardNo) {
-                    eventosConTarjeta.add((evento.cardNo));
+                    eventosConTarjeta.add(evento.cardNo);
                 }
             }
 
-            handleInvalidEvent(eventosConTarjeta)
+            handleInvalidEvent(eventosConTarjeta);
 
             return res.status(200).json({ 
                 status: 'success',

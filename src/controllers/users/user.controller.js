@@ -431,59 +431,46 @@ const addUserInfo = async (req, res) => {
  * - Envía una respuesta JSON indicando el éxito o el fallo del proceso.
  */
 
-const updateUserStatus = async (req, res) => {
+const updateUserStatus = async (employeeNo, status) => {
+  console.log(`Intentando actualizar estado del usuario ${employeeNo} a: ${status ? 'Activo' : 'Desactivado'}`);
   try {
-    const { employeeNo, status } = req.body;
+      // Actualizar estado en la base de datos
+      const query = `
+          UPDATE public.users
+          SET active = $1
+          WHERE employee_no = $2
+          RETURNING *;
+      `;
+      console.log(`Ejecutando query: ${query}`);
+      const result = await client.query(query, [status, employeeNo]);
+      console.log(`RESULTADO DE UPDATE USER STATUS:`, result);
 
-    // Buscar al usuario por su número de empleado
-    const user = await UserModel.searchUserByEmployeeNo(employeeNo);
-    if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado.' });
-    }
+      if (result.rows.length > 0) {
+          console.log(`✔️ Estado del usuario ${employeeNo} actualizado a: ${status ? 'Activo' : 'Desactivado'}`);
 
-    if (status) {
-      // Crear o actualizar el usuario en el dispositivo
-      const createUserResponse = await createUserInDevice(user);
-      if (createUserResponse.error) {
-        return res.status(createUserResponse.statusCode || 500).json(createUserResponse);
+          // Si el usuario se desactiva, solo eliminarlo del dispositivo, NO de la base de datos
+          if (!status) {
+            console.log(`🚨 Usuario ${employeeNo} desactivado, pero manteniéndolo en la base de datos.`);
+            const markUserDeletedQuery = `
+                UPDATE public.users
+                SET deleted_from_device = TRUE
+                WHERE employee_no = $1
+            `;
+            await client.query(markUserDeletedQuery, [employeeNo]);
+        }
+        
+          
+          return result.rows[0];
+      } else {
+          console.warn(`⚠️ No se encontró el usuario ${employeeNo} para actualizar.`);
+          return null;
       }
-
-      
-      // Manejar la imagen del perfil del usuario
-      const imageResponse = await handleUserProfileImage(employeeNo);
-      if (imageResponse.error) {
-        return res.status(imageResponse.statusCode || 500).json(imageResponse);
-      }
-      
-      // Manejar las tarjetas del usuario
-      const cardResponse = await handleUserCards(employeeNo);
-      if (cardResponse.error) {
-        return res.status(cardResponse.statusCode || 500).json(cardResponse);
-      }
-    } else {
-      // Eliminar el usuario del dispositivo
-      const deleteResponse = await deleteUserFromDevice(employeeNo);
-      if (deleteResponse.error) {
-        return res.status(deleteResponse.statusCode || 500).json(deleteResponse);
-      }
-    }
-
-    // Actualizar el estado del usuario en la base de datos
-    const updatedUser = await UserModel.updateUserStatus(employeeNo, status);
-
-    // Respuesta final
-    return res.status(200).json({
-      message: 'Estado del usuario actualizado exitosamente.',
-      data: updatedUser,
-    });
   } catch (error) {
-    console.error('Error en updateUserStatus:', error);
-    return res.status(500).json({
-      message: 'Error interno del servidor.',
-      error: error.message,
-    });
+      console.error(`Error al actualizar estado del usuario ${employeeNo}:`, error.message);
+      return null;
   }
 };
+
 
 /**
  * Elimina un usuario de la base de datos y el dispositivo.

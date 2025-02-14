@@ -5,7 +5,8 @@ const insertEvent = async (event) => {
         const query = `
             INSERT INTO eventos_accesos (employee_no, nombre, card_no, timestamp, door_no, serial_no, user_type, verify_mode, mask_status, picture_url)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            ON CONFLICT (serial_no) DO NOTHING;
+            ON CONFLICT (serial_no) DO NOTHING
+            RETURNING serial_no;
         `;
 
         const values = [
@@ -21,9 +22,12 @@ const insertEvent = async (event) => {
             event.picture_url
         ];
 
-        await client.query(query, values);
+        const result = await client.query(query, values);
+        return result.rowCount > 0; // Devuelve true si se insertó, false si ya existía
+
     } catch (error) {
         console.error('Error insertando evento:', error);
+        return false;
     }
 };
 

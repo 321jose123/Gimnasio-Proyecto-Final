@@ -5,17 +5,25 @@ const { client } = require("../../db/databasepg");
  */
 const deleteUserByEmployeeNo = async (employeeNo) => {
     try {
+        
+        const deleteEventsQuery = `
+            DELETE FROM eventos_accesos
+            WHERE employee_no = $1;
+        `;
+        await client.query(deleteEventsQuery, [employeeNo]);
+
         const deleteImagesQuery = `
             DELETE FROM user_images
             WHERE employee_no = $1;
         `;
         await client.query(deleteImagesQuery, [employeeNo]);
-
+        
         const deleteUserQuery = `
-            DELETE FROM users
-            WHERE employee_no = $1
-            RETURNING *;
+        DELETE FROM users
+        WHERE employee_no = $1
+        RETURNING *;
         `;
+        
         const result = await client.query(deleteUserQuery, [employeeNo]);
 
         if (result.rowCount === 0) {
