@@ -75,6 +75,11 @@ const validateAddUser = [
     check('gender')
         .exists().withMessage('gender es requerido')
         .isIn(['male', 'female']).withMessage('gender debe ser male o female'),
+    check('accesosDisponibles')
+        .exists().withMessage('accesosDisponibles es requerido')
+        .isInt().withMessage('accesosDisponibles debe ser un entero')
+        .isInt({ min: 0 }).withMessage('accesosDisponibles no puede ser negativo')
+        .isInt({ min: 1, max: 40 }).withMessage('accesosDisponibles debe ser un entero entre 1 y 40'),
 
     // Nuevos campos para información personal
     check('email')

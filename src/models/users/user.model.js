@@ -20,7 +20,7 @@ const createUser = async (userInfo) => {
     const {
         employeeNo, name, userType, doorRight, Valid, RightPlan,
         localUIUserType, userVerifyMode, addUser, gender, email,
-        phoneNumber, address, city, country, dateOfBirth, active
+        phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles
     } = userInfo;
 
     try {
@@ -51,20 +51,20 @@ const createUser = async (userInfo) => {
           valid_enable, valid_begin_time, valid_end_time,
           door_no, plan_template_no,
           local_ui_user_type, user_verify_mode, add_user, gender,
-          email, phone_number, address, city, country, date_of_birth, active
+          email, phone_number, address, city, country, date_of_birth, active, accesos_disponibles
       ) VALUES (
           $1, $2, $3, $4,
           $5, $6, $7,
           $8, $9,
           $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20
+          $14, $15, $16, $17, $18, $19, $20, $21
       )`;
 
 
       const values = [
           employeeNo, name, userType, doorRight, Valid.enable, Valid.beginTime, Valid.endTime,
           doorNo, planTemplateNo, localUIUserType, userVerifyMode, addUser, gender, email,
-          phoneNumber, address, city, country, dateOfBirth, active
+          phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles
       ];
 
       const result = await client.query(query, values);

@@ -20,7 +20,7 @@ const saveCardToUser = async (employeeNo, cardNo, deleteCard, cardType, checkCar
         add_card = EXCLUDED.add_card
     RETURNING *;
   `;
-  const values = [employeeNo, cardNo, deleteCard, cardType, checkCardNo, checkEmployeeNo, addCard];
+  const values = [employeeNo, cardNo, deleteCard, cardType, checkCardNo, checkEmployeeNo, addCard, accesosDisponibles];
   try {
     const result = await client.query(query, values);
     return result.rows[0];

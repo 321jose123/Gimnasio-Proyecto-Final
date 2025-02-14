@@ -371,7 +371,6 @@ const addUserInfo = async (req, res) => {
   try {
 
     const { Valid } = req.body;
-
     const { beginTime, endTime } = Valid || {};
 
     if (!validateDateRange(beginTime, endTime)) {
@@ -379,8 +378,8 @@ const addUserInfo = async (req, res) => {
     }
 
     const { userData, jsonData } = buildUserObjects(req.body);
-
     const existingUser = await UserModel.searchUserByEmployeeNo(userData.employeeNo);
+
     if (existingUser) {
       return res.status(409).json({
         message: 'El usuario ya existe en la base de datos.',
