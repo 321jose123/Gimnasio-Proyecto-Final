@@ -22,28 +22,28 @@ const validateAddFingerprintToUser = [
     check('FingerPrintCfg.enableCardReader')
       .isArray({ min: 1 }).withMessage('enableCardReader debe ser un arreglo con al menos un elemento'),
   
-    check('FingerPrintCfg.fingerPrintID')
-      .exists().withMessage('fingerPrintID es requerido')
-      .isNumeric().withMessage('fingerPrintID debe ser un número'),
+    // check('FingerPrintCfg.fingerPrintID')
+    //   .exists().withMessage('fingerPrintID es requerido')
+    //   .isNumeric().withMessage('fingerPrintID debe ser un número'),
   
-    check('FingerPrintCfg.deleteFingerPrint')
-      .exists().withMessage('deleteFingerPrint es requerido')
-      .isBoolean().withMessage('deleteFingerPrint debe ser un valor booleano'),
+    // check('FingerPrintCfg.deleteFingerPrint')
+    //   .exists().withMessage('deleteFingerPrint es requerido')
+    //   .isBoolean().withMessage('deleteFingerPrint debe ser un valor booleano'),
   
-    check('FingerPrintCfg.fingerType')
-      .exists().withMessage('fingerType es requerido')
-      .isIn(['normalFP', 'leaderFP']).withMessage('fingerType debe ser normalFP o leaderFP'),
+    // check('FingerPrintCfg.fingerType')
+    //   .exists().withMessage('fingerType es requerido')
+    //   .isIn(['normalFP', 'leaderFP']).withMessage('fingerType debe ser normalFP o leaderFP'),
   
     check('FingerPrintCfg.fingerData')
       .exists().withMessage('fingerData es requerido')
       .notEmpty().withMessage('fingerData no debe estar vacío'),
   
-    check('FingerPrintCfg.leaderFP')
-      .isArray({ min: 1 }).withMessage('leaderFP debe ser un arreglo con al menos un elemento'),
+    // check('FingerPrintCfg.leaderFP')
+    //   .isArray({ min: 1 }).withMessage('leaderFP debe ser un arreglo con al menos un elemento'),
   
-    check('FingerPrintCfg.checkEmployeeNo')
-      .exists().withMessage('checkEmployeeNo es requerido')
-      .isBoolean().withMessage('checkEmployeeNo debe ser un valor booleano'),
+    // check('FingerPrintCfg.checkEmployeeNo')
+    //   .exists().withMessage('checkEmployeeNo es requerido')
+    //   .isBoolean().withMessage('checkEmployeeNo debe ser un valor booleano'),
   
     (req, res, next) => {
       validateResult(req, res, next);

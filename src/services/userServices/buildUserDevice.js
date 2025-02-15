@@ -109,6 +109,8 @@ const handleUserProfileImage = async (employeeNo) => {
       const imgBuffer = Buffer.from(img64, 'base64');
       fs.writeFileSync(tempImagePath, imgBuffer);
 
+      console.log('Imagen temporal guardada:', tempImagePath);
+
       const faceDataRecord = {
         faceLibType: "blackFD",
         FDID: "1",

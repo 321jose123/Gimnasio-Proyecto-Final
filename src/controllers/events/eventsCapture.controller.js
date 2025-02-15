@@ -1,6 +1,6 @@
 const { API_URL_DEVICE_EVENTS } = require('../../../config');
 const { apiService } = require('../../services/apiServices');
-const { insertEvent } = require('../../models/events/events.models');
+const { insertEvent, getAllEvents } = require('../../models/events/events.models');
 const { getUserAccessCount, decrementUserAccess } = require('../../models/users/user.model');
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -16,13 +16,15 @@ const finDia = ahora.endOf("day").toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
 const hora_inicio_utc = inicioDia;
 const hora_final_utc = finDia;
 
+
+
 const eventsCapture = async (req, res) => {
     try {
         const jsondata = {
             "AcsEventCond": {
                 "searchID": searchID,
                 "searchResultPosition": 0,
-                "maxResults": 10,
+                "maxResults": 100,
                 "major": 0,
                 "minor": 0,
                 "startTime": hora_inicio_utc,
@@ -30,8 +32,9 @@ const eventsCapture = async (req, res) => {
                 "timeReverseOrder": true
             }
         };
-
+        
         console.log("Solicitud enviada a la API:", jsondata);
+        console.log("inicio día:", hora_inicio_utc);
 
         let eventsUserCapture;
         try {
@@ -125,6 +128,26 @@ const eventsCapture = async (req, res) => {
     }
 };
 
+const getAllEventsCapture = async (req, res) => {
+    try {
+        const events = await getAllEvents();
+        return res.status(200).json({ 
+            status: 'success',
+            message: 'Mostrando lista de eventos capturados',
+            totalEventos: events.length,
+            eventos: events
+        });
+    } catch (error) {
+        console.error("Error en el proceso de captura:", error);
+        res.status(500).json({ 
+            message: 'Error general en la captura de eventos',
+            status: 'error',
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     eventsCapture,
+    getAllEventsCapture
 };

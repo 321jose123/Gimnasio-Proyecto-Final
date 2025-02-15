@@ -23,7 +23,7 @@ const insertEvent = async (event) => {
         ];
 
         const result = await client.query(query, values);
-        return result.rowCount > 0; // Devuelve true si se insertó, false si ya existía
+        return result.rowCount > 0;
 
     } catch (error) {
         console.error('Error insertando evento:', error);
@@ -31,4 +31,24 @@ const insertEvent = async (event) => {
     }
 };
 
-module.exports = { insertEvent };
+const getAllEvents = async () => {
+    try {
+        const query = `
+            SELECT * FROM eventos_accesos
+            ORDER BY timestamp DESC;
+        `;
+
+        const result = await client.query(query);
+        return result.rows;
+
+    } catch (error) {
+        console.error('Error consultando eventos:', error);
+        return [];
+    }
+};
+
+module.exports = { 
+    insertEvent, 
+    getAllEvents 
+};
+

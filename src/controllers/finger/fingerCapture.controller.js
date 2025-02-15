@@ -32,12 +32,12 @@ const addFingertoUser = async (req, res) => {
     const assignBody = {
       FingerPrintCfg: {
         employeeNo: FingerPrintCfg.employeeNo,
-        enableCardReader: FingerPrintCfg.enableCardReader,
+        enableCardReader: [1],
         fingerPrintID: FingerPrintCfg.fingerPrintID,
-        deleteFingerPrint: FingerPrintCfg.deleteFingerPrint,
-        fingerType: FingerPrintCfg.fingerType,
+        deleteFingerPrint: false,
+        fingerType: "normalFP",
         fingerData: FingerPrintCfg.fingerData,
-        leaderFP: FingerPrintCfg.leaderFP,
+        leaderFP: [1],
         checkEmployeeNo: false
       }
     };
