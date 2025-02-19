@@ -57,6 +57,23 @@ const createUserInDevice = async (user) => {
   }
 };
 
+//Función para editar los accesos del usuario en la base de datos
+const updateUserAccesses = async (employeeNo, accesses) => {
+  try {
+    const updatedAccesses = await updateUserAccesses(employeeNo, accesses);
+    console.log('Accesos actualizados en la base de datos:', updatedAccesses);
+    return { success: true };
+  } catch (error) {
+    console.error('Error al actualizar los accesos del usuario:', error);
+    return {
+      error: true,
+      statusCode: 500,
+      message: 'Error al actualizar los accesos del usuario.',
+      error: error.message,
+    };
+  }
+};
+
 // Función para manejar las tarjetas del usuario
 const handleUserCards = async (employeeNo) => {
   try {

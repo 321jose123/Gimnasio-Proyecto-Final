@@ -13,7 +13,7 @@ module.exports = {
   TIME_SYNC : 10,
 
   //TODO: CONEXIÓN CON DATABASE CONFIG
-  db_host: '192.168.1.38',
+  db_host: '192.168.1.57',
   db_port: 5432,
   db_user: 'postgres',
   db_password: '2520',

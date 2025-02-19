@@ -9,6 +9,7 @@ const { findUserInDevice } = require('../../services/userServices/findUserInDevi
 const { handleError } = require('../../services/errors/handleErrors');
 const { buildUserObjects } = require('../../services/userServices/buildUserObjet');
 const { createUserInDevice, handleUserCards, handleUserProfileImage, deleteUserFromDevice } = require('../../services/userServices/buildUserDevice');
+const { updateUserAccesses } = require('../../models/users/usersEditAccess.model');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -481,6 +482,28 @@ const updateUserStatus = async (req, res) => {
   }
 };
 
+const updateUserAccessesService = async (req, res) => {
+
+  const { employeeNo, accesses } = req.body;
+
+  try {
+    const updatedAccesses = await updateUserAccesses(employeeNo, accesses);
+    if (updatedAccesses.error) {
+      return res.status(updatedAccesses.statusCode || 500).json(updatedAccesses);
+    }
+    return res.status(200).json({
+      message: 'Accesos actualizados exitosamente.',
+      data: updatedAccesses,
+    });
+  } catch (error) {
+    console.error('Error al actualizar los accesos del usuario:', error);
+    return res.status(500).json({
+      message: 'Error al actualizar los accesos del usuario.',
+      error: error.message,
+    });
+  }
+};
+
 
 /**
  * Elimina un usuario de la base de datos y el dispositivo.
@@ -544,4 +567,5 @@ module.exports = {
   updateUserFace,
   deleteUserImage,
   getUserImageAsJPEG,
+  updateUserAccessesService,
 };

@@ -119,9 +119,43 @@ const validateAddUser = [
     }
 ];
 
+const updateUserAccess = [
+    check('employeeNo')
+        .exists().withMessage('employeeNo es requerido')
+        .not().isEmpty().withMessage('employeeNo no debe estar vacío')
+        .isString().withMessage('employeeNo debe ser un string')
+        .matches(/^[0-9]+$/).withMessage('employeeNo debe contener solo números'),
+    check('status')
+        .exists().withMessage('status es requerido')
+        .isBoolean().withMessage('status debe ser un booleano'),
+        
+    (req, res, next) => {
+        validateResult(req, res, next);
+    }
+]
+
+const updateSingleAccess = [
+    check('employeeNo')
+        .exists().withMessage('employeeNo es requerido')
+        .not().isEmpty().withMessage('employeeNo no debe estar vacío')
+        .isString().withMessage('employeeNo debe ser un string')
+        .matches(/^[0-9]+$/).withMessage('employeeNo debe contener solo números'),
+    check('accesses')
+        .optional()
+        .isInt().withMessage('accesos debe ser un entero y no puede ser un string')
+        .isInt({ min: 0 }).withMessage('accesos no puede ser negativo')
+        .isInt({ max: 365 }).withMessage('accesos debe ser un entero entre 0 y 365'),
+        
+    (req, res, next) => {
+        validateResult(req, res, next);
+    }
+]
+
 module.exports = {
     validateDeleteUser,
     validateAddUser,
     validateUserSearch,
-    validateUserImage
+    validateUserImage,
+    updateUserAccess,
+    updateSingleAccess
 }
