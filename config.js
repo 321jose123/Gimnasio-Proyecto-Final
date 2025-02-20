@@ -36,6 +36,7 @@ module.exports = {
     //TODO: INFORMACIÓN USUARIO
 
     API_URL_ADD_USER: `${BASE_URL}/ISAPI/AccessControl/UserInfo/Record?format=json`,
+    API_URL_UPDATE_USER : `${BASE_URL}/ISAPI/AccessControl/UserInfo/Modify?format=json`,
     API_URL_DELETE_USER : `${BASE_URL}/ISAPI/AccessControl/UserInfo/Delete?format=json`,
     API_URL_SEARCH_USER : `${BASE_URL}/ISAPI/AccessControl/UserInfo/Search?format=json`,
 

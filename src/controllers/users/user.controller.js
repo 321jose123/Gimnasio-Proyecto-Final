@@ -8,8 +8,9 @@ const UserModel = require('../../models/users/users.models');
 const { findUserInDevice } = require('../../services/userServices/findUserInDevice');
 const { handleError } = require('../../services/errors/handleErrors');
 const { buildUserObjects } = require('../../services/userServices/buildUserObjet');
-const { createUserInDevice, handleUserCards, handleUserProfileImage, deleteUserFromDevice } = require('../../services/userServices/buildUserDevice');
+const { createUserInDevice, handleUserCards, handleUserProfileImage, deleteUserFromDevice, updateUserInDevice, updateUserTimeAccess, updateUserTimeAccessInDevice } = require('../../services/userServices/buildUserDevice');
 const { updateUserAccesses } = require('../../models/users/usersEditAccess.model');
+const { log } = require('console');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -484,17 +485,36 @@ const updateUserStatus = async (req, res) => {
 
 const updateUserAccessesService = async (req, res) => {
 
-  const { employeeNo, accesses } = req.body;
+  const { employeeNo, accesses, beginTime, endTime } = req.body;
 
   try {
-    const updatedAccesses = await updateUserAccesses(employeeNo, accesses);
-    if (updatedAccesses.error) {
-      return res.status(updatedAccesses.statusCode || 500).json(updatedAccesses);
-    }
-    return res.status(200).json({
-      message: 'Accesos actualizados exitosamente.',
-      data: updatedAccesses,
-    });
+      const existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
+
+      if (existingUser) {
+        try {
+          const updateUserAccessInDeviceResponse = await updateUserTimeAccessInDevice(employeeNo, beginTime, endTime);
+          console.log('Accesos actualizados en el dispositivo:', updateUserAccessInDeviceResponse);
+          const updateUserTimeAccessInDBResponse = await UserModel.updateUserAccessTime(employeeNo, beginTime, endTime);
+          console.log('Accesos actualizados en la base de datos:', updateUserTimeAccessInDBResponse);
+          const updatedUser = await updateUserAccesses(employeeNo, accesses);
+          console.log('Accesos actualizados en la base de datos:', updatedUser);
+          return res.status(200).json({
+            message: 'Accesos actualizados exitosamente en la base de datos.',
+            data: updatedUser,
+          });
+        } catch (error) {
+          console.error('Error al actualizar los accesos del usuario:', error);
+          return res.status(500).json({
+            message: 'Error al actualizar los accesos del usuario.',
+            error: error.message,
+          });
+        }
+      }
+      console.log('El usuario no existe en la base de datos.');
+      return res.status(404).json({
+        message: 'El usuario no existe en la base de datos.',
+      });
+
   } catch (error) {
     console.error('Error al actualizar los accesos del usuario:', error);
     return res.status(500).json({

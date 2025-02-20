@@ -154,6 +154,32 @@ const updateUserStatus = async (employeeNo, status) => {
     }
 };
 
+const updateUserAccessTime = async (employeeNo, beginTime, endTime) => {
+    console.log(`Intentando actualizar acceso del usuario ${employeeNo} a: ${beginTime} - ${endTime}`);
+
+    try {
+        const query = `
+            UPDATE public.users
+            SET valid_begin_time = $1, valid_end_time = $2
+            WHERE employee_no = $3
+            RETURNING *;
+        `;
+        const result = await client.query(query, [beginTime, endTime, employeeNo]);
+        
+        if (result.rows.length > 0) {
+            console.log(`✔️ Acceso del usuario ${employeeNo} actualizado a: ${beginTime} - ${endTime}`);
+            return result.rows[0];
+        } else {
+            console.warn(`⚠️ No se encontró el usuario ${employeeNo} para actualizar.`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error al actualizar acceso del usuario ${employeeNo}:`, error.message);
+        return null;
+    }
+    
+}
+
 const searchCardByCardNo = async (cardNo) => {
     const query = `
         SELECT * FROM user_cards
@@ -172,5 +198,6 @@ module.exports = {
     searchCardByCardNo,
     getUserAccessCount,
     decrementUserAccess,
-    updateUserStatus
+    updateUserStatus,
+    updateUserAccessTime
 };

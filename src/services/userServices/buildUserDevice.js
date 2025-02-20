@@ -1,11 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const { apiService, apiServiceImage } = require('../apiServices');
-const { API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_UPDATE_USER_PROFILE_IMAGE, API_URL_ADD_CARD_TO_USER } = require('../../../config');
-const UserModel = require('../../models/users/users.models');
+const { API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_UPDATE_USER, API_URL_UPDATE_USER_PROFILE_IMAGE, API_URL_ADD_CARD_TO_USER } = require('../../../config');
 const { formatToUTC } = require('../../helpers/validate.helpers');
 const { getCardFromUser } = require('../../models/cards/cards.models');
 const { getUserImage } = require('../../models/users/userImage.model');
+const { updateUserAccesses } = require('../../models/users/usersEditAccess.model');
+const { updateUserAccessTime } = require('../../models/users/user.model');
+
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
@@ -57,19 +59,28 @@ const createUserInDevice = async (user) => {
   }
 };
 
-//Función para editar los accesos del usuario en la base de datos
-const updateUserAccesses = async (employeeNo, accesses) => {
+const updateUserTimeAccessInDevice = async (employeeNo, beginTime, endTime) => {
   try {
-    const updatedAccesses = await updateUserAccesses(employeeNo, accesses);
-    console.log('Accesos actualizados en la base de datos:', updatedAccesses);
+    const jsonData = {
+      userInfo: {
+        employeeNo: employeeNo,
+        Valid: {
+          beginTime: formatToUTC(beginTime),
+          endTime: formatToUTC(endTime),
+        }
+      }
+    };
+    const response = await apiService.put(API_URL_UPDATE_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
+    console.log('Usuario actualizado en el dispositivo:', response);
     return { success: true };
-  } catch (error) {
-    console.error('Error al actualizar los accesos del usuario:', error);
+  } catch (apiError) {
+    console.error('Error: el usuario no se pudo actualizar:', apiError);
     return {
       error: true,
-      statusCode: 500,
-      message: 'Error al actualizar los accesos del usuario.',
-      error: error.message,
+      statusCode: 409,
+      error: true,
+      statusCode: 409,
+      message: 'Error: el usuario no se pudo actualizar.' + apiError,
     };
   }
 };
@@ -188,7 +199,9 @@ const deleteUserFromDevice = async (employeeNo) => {
 
 module.exports = {
   createUserInDevice,
+  updateUserTimeAccessInDevice,
   handleUserCards,
   handleUserProfileImage,
   deleteUserFromDevice,
+  updateUserAccesses,
 };

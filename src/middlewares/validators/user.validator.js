@@ -141,11 +141,19 @@ const updateSingleAccess = [
         .isString().withMessage('employeeNo debe ser un string')
         .matches(/^[0-9]+$/).withMessage('employeeNo debe contener solo números'),
     check('accesses')
-        .optional()
-        .isInt().withMessage('accesos debe ser un entero y no puede ser un string')
+        .exists().withMessage('accesos es requerido')
+        .isInt().withMessage('accesos debe ser un entero')
         .isInt({ min: 0 }).withMessage('accesos no puede ser negativo')
         .isInt({ max: 365 }).withMessage('accesos debe ser un entero entre 0 y 365'),
-        
+    check('beginTime')
+        .exists().withMessage('beginTime es requerido')
+        .isString().withMessage('beginTime debe ser un string')
+        .isISO8601().withMessage('beginTime debe ser una fecha válida (formato ISO8601)'),
+    check('endTime')
+        .exists().withMessage('endTime es requerido')
+        .isString().withMessage('endTime debe ser un string')
+        .isISO8601().withMessage('Valid.endTime debe ser una fecha válida (formato ISO8601)'),
+
     (req, res, next) => {
         validateResult(req, res, next);
     }
