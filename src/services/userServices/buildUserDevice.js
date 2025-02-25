@@ -6,7 +6,6 @@ const { formatToUTC } = require('../../helpers/validate.helpers');
 const { getCardFromUser } = require('../../models/cards/cards.models');
 const { getUserImage } = require('../../models/users/userImage.model');
 const { updateUserAccesses } = require('../../models/users/usersEditAccess.model');
-const { updateUserAccessTime } = require('../../models/users/user.model');
 
 
 const { API_USERNAME, API_PASSWORD } = process.env;

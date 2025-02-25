@@ -30,6 +30,9 @@ const deleteUserByEmployeeNo = async (employeeNo) => {
             return null;
         }
 
+        console.log("Resultados", result);
+        
+
         return result.rows[0];
     } catch (error) {
         throw new Error('Error al eliminar el usuario');

@@ -8,9 +8,8 @@ const UserModel = require('../../models/users/users.models');
 const { findUserInDevice } = require('../../services/userServices/findUserInDevice');
 const { handleError } = require('../../services/errors/handleErrors');
 const { buildUserObjects } = require('../../services/userServices/buildUserObjet');
-const { createUserInDevice, handleUserCards, handleUserProfileImage, deleteUserFromDevice, updateUserInDevice, updateUserTimeAccess, updateUserTimeAccessInDevice } = require('../../services/userServices/buildUserDevice');
+const { createUserInDevice, handleUserCards, handleUserProfileImage, deleteUserFromDevice, updateUserTimeAccessInDevice } = require('../../services/userServices/buildUserDevice');
 const { updateUserAccesses } = require('../../models/users/usersEditAccess.model');
-const { log } = require('console');
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
