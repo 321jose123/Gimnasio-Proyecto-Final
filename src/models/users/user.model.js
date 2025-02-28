@@ -75,6 +75,88 @@ const createUser = async (userInfo) => {
 
 };
 
+const updateUser = async (userData) => {
+    const {
+      employeeNo, name, userType, doorRight, validEnable, validBeginTime, validEndTime,
+      planTemplateNo, localUIUserType, userVerifyMode, addUser, gender, email,
+      phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles
+    } = userData;
+  
+    try {
+      // Verificar si ya existe un usuario con el mismo email o teléfono
+      const checkExistsQuery = `
+        SELECT EXISTS (
+          SELECT 1 FROM users WHERE
+            ($1 = email OR $2 = phone_number) AND
+            employee_no != $3
+        );
+      `;
+      const exists = await client.query(checkExistsQuery, [email, phoneNumber, employeeNo]);
+      if (exists.rows[0].exists) {
+        return {
+          error: true,
+          status: 400,
+          message: 'El correo electrónico o número de teléfono ya están registrados.'
+        };
+      }
+  
+      // Actualizar el usuario en la base de datos
+      const query = `
+        UPDATE users SET
+          name = $1,
+          user_type = $2,
+          door_right = $3,
+          valid_enable = $4,
+          valid_begin_time = $5,
+          valid_end_time = $6,
+          plan_template_no = $7,
+          local_ui_user_type = $8,
+          user_verify_mode = $9,
+          add_user = $10,
+          gender = $11,
+          email = $12,
+          phone_number = $13,
+          address = $14,
+          city = $15,
+          country = $16,
+          date_of_birth = $17,
+          active = $18,
+          accesos_disponibles = $19
+        WHERE employee_no = $20
+        RETURNING *
+      `;
+  
+      const values = [
+        name, userType, doorRight, validEnable, validBeginTime, validEndTime,
+        planTemplateNo, localUIUserType, userVerifyMode, addUser, gender, email,
+        phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, employeeNo
+      ];
+  
+      const result = await client.query(query, values);
+      if (result.rowCount === 0) {
+        return {
+          error: true,
+          status: 400,
+          message: 'No se pudo actualizar el usuario.'
+        };
+      }
+  
+      return {
+        error: false,
+        data: result.rows[0]
+      };
+    } catch (error) {
+      console.error('Error en modelo updateUser:', error);
+      return {
+        error: true,
+        status: 500,
+        message: 'Error interno en la base de datos',
+        details: error.message
+      };
+    }
+  };
+  
+
 const getUserAccessCount = async (employeeNo) => {
     const query = `
         SELECT accesos_disponibles FROM public.users
@@ -199,5 +281,6 @@ module.exports = {
     getUserAccessCount,
     decrementUserAccess,
     updateUserStatus,
-    updateUserAccessTime
+    updateUserAccessTime,
+    updateUser,
 };

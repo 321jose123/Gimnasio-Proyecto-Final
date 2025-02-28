@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getUserCapabilities, addUserInfo, deleteUser, searchUser, updateUserFace, getUserImageAsJPEG, deleteUserImage, updateUserStatus, updateUserAccessesService } = require('../../controllers/users/user.controller');
+const { getUserCapabilities, addUserInfo, deleteUser, searchUser, updateUserFace, getUserImageAsJPEG, deleteUserImage, updateUserStatus, updateUserAccessesService, updateUserInfo } = require('../../controllers/users/user.controller');
 const { validateDeleteUser, validateAddUser, validateUserSearch, validateUserImage, updateUserAccess, updateSingleAccess } = require('../../middlewares/validators/user.validator');
 
 router.get('/capabilities', getUserCapabilities);
@@ -12,5 +12,6 @@ router.post('/update-face', validateUserImage , updateUserFace);
 router.put('/delete-face', deleteUserImage);
 router.get('/profile-image', getUserImageAsJPEG)
 router.put('/update-accesses', updateSingleAccess , updateUserAccessesService)
+router.post('/update-user-info', updateUserInfo)
 
 module.exports = router;

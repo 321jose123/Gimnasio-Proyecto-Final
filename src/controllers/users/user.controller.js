@@ -5,7 +5,6 @@ const { apiService, apiServiceImage } = require('../../services/apiServices');
 const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE } = require('../../../config');
 const { validateDateRange } = require('../../helpers/validate.helpers');
 const UserModel = require('../../models/users/users.models');
-const { findUserInDevice } = require('../../services/userServices/findUserInDevice');
 const { handleError } = require('../../services/errors/handleErrors');
 const { buildUserObjects } = require('../../services/userServices/buildUserObjet');
 const { createUserInDevice, handleUserCards, handleUserProfileImage, deleteUserFromDevice, updateUserTimeAccessInDevice } = require('../../services/userServices/buildUserDevice');
@@ -13,74 +12,7 @@ const { updateUserAccesses } = require('../../models/users/usersEditAccess.model
 
 const { API_USERNAME, API_PASSWORD } = process.env;
 
-/**
- * Busca un usuario en la base de datos y en el dispositivo.
- * @function searchUser
- * @param {Object} req - Request object.
- * @param {Object} res - Response object.
- * @returns {Promise<Object>} - Response object with information about the user.
- * @throws {Error} - If there is an error in the service.
- */
-const searchUser = async (req, res) => {
-  try {
-    const { EmployeeNoList = [], fuzzySearch = "" } = req.body;
-
-    if (!Array.isArray(EmployeeNoList) || EmployeeNoList.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Debe proporcionar al menos un número de empleado en EmployeeNoList.",
-        data: null,
-      });
-    }
-
-    const firstEmployeeNo = EmployeeNoList[0];
-    let userFromDB;
-    try {
-      userFromDB = await UserModel.searchUserByEmployeeNo(firstEmployeeNo);
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Error al buscar el usuario en la base de datos.",
-        error: error.message,
-      });
-    }
-
-    if (userFromDB) {
-      return res.status(200).json({
-        success: true,
-        message: "Usuario encontrado en la base de datos.",
-        source: "database",
-        data: userFromDB,
-      });
-    }
-
-    let userFromDevice;
-    try {
-      userFromDevice = await findUserInDevice(EmployeeNoList, fuzzySearch);
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Error al buscar el usuario en el dispositivo.",
-        error: error.message,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Usuario encontrado en el dispositivo.",
-      source: "device",
-      data: userFromDevice,
-    });
-  } catch (err) {
-    console.error("Error en searchUser:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Error al buscar usuario.",
-      error: process.env.NODE_ENV === "production" ? undefined : err.message,
-    });
-  }
-};
-
+const { searchUser } = require('./searchUser');
 
 /**
  * Obtiene las capacidades del usuario desde el dispositivo.
@@ -415,6 +347,71 @@ const addUserInfo = async (req, res) => {
 };
 
 /**
+ * Actualiza la información de un usuario en la base de datos.
+ * @async
+ * @function updateUserInfo
+ * @param {Object} req - Objeto de solicitud, que debe contener los datos del usuario a actualizar.
+ * @param {Object} res - Objeto de respuesta.
+ * @returns {Promise<void>} - No devuelve un valor, pero envía una respuesta JSON con el resultado.
+ * @throws {Error} - Lanza un error si ocurre algún problema al actualizar la base de datos.
+ */
+const updateUserInfo = async (req, res) => {
+  const { employeeNo, name, email, phoneNumber, address, city, country, dateOfBirth, Valid } = req.body;
+
+  try {
+    // Verificamos si el usuario existe
+    const userParams = await UserModel.searchUserByEmployeeNo(employeeNo);
+    if (!userParams) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    // Crear el objeto con los parámetros necesarios
+    const userData = {
+      employeeNo: userParams.employee_no,
+      name: name,
+      userType: userParams.user_type,
+      doorRight: userParams.door_right,
+      validEnable: userParams.valid_enable,
+      validBeginTime: Valid ? Valid.beginTime : null,
+      validEndTime: Valid ? Valid.endTime : null,
+      planTemplateNo: userParams.plan_template_no,
+      localUIUserType: userParams.local_ui_user_type,
+      userVerifyMode: userParams.user_verify_mode,
+      addUser: userParams.add_user,
+      gender: userParams.gender,
+      email: email,
+      phoneNumber: phoneNumber,
+      address: address,
+      city: city,
+      country: country,
+      dateOfBirth: dateOfBirth,
+      active: userParams.active,
+      accesosDisponibles: userParams.accesos_disponibles,
+    };
+
+    // Llamar al modelo para actualizar el usuario
+    const result = await UserModel.updateUser(userData);
+
+    // Verificar el resultado
+    if (result.error) {
+      return res.status(result.status || 400).json({ message: result.message });
+    }
+
+    res.status(200).json({
+      message: 'Usuario actualizado exitosamente.',
+      data: result.data,
+    });
+  } catch (error) {
+    console.error('Error al actualizar el usuario:', error);
+    res.status(500).json({
+      message: 'Error interno del servidor al actualizar el usuario.',
+      error: error.message,
+    });
+  }
+};
+
+
+/**
  * Actualiza el estado de un usuario en la base de datos y el dispositivo.
  *
  * @async
@@ -581,6 +578,7 @@ module.exports = {
   getUserCapabilities,
   deleteUser,
   addUserInfo,
+  updateUserInfo,
   updateUserStatus,
   searchUser,
   updateUserFace,
