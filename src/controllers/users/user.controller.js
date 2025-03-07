@@ -13,6 +13,7 @@ const { updateUserAccesses } = require('../../models/users/usersEditAccess.model
 const { API_USERNAME, API_PASSWORD } = process.env;
 
 const { searchUser } = require('./searchUser');
+const { listAllUsers } = require('./listAllUsers');
 
 /**
  * Obtiene las capacidades del usuario desde el dispositivo.
@@ -581,6 +582,7 @@ module.exports = {
   updateUserInfo,
   updateUserStatus,
   searchUser,
+  listAllUsers,
   updateUserFace,
   deleteUserImage,
   getUserImageAsJPEG,

@@ -12,6 +12,35 @@ const searchUserByEmployeeNo = async (employeeNo) => {
     return result.rows.length > 0 ? result.rows[0] : null;
 };
 
+const getAllUsers = async (page = 1, pageSize = 10) => {
+    
+    const offset = (page - 1) * pageSize;
+
+    const query = `
+        SELECT * FROM users
+        ORDER BY employee_no  -- Asegúrate de ordenar los usuarios de alguna manera (por ejemplo, por ID)
+        LIMIT $1 OFFSET $2
+    `;
+    const values = [pageSize, offset];
+
+    try {
+        const result = await client.query(query, values);
+
+        const totalQuery = 'SELECT COUNT(*) FROM users';
+        const totalResult = await client.query(totalQuery);
+        const totalUsers = totalResult.rows[0].count;
+        
+        return {
+            totalUsers: totalUsers,
+            users: result.rows,
+        };
+    } catch (error) {
+        console.error('Error al obtener los usuarios:', error);
+        throw new Error('Error al obtener los usuarios, ', error);
+    }
+};
+
+
 /**
  * Crea un nuevo usuario en la base de datos.
  */
@@ -277,6 +306,7 @@ const searchCardByCardNo = async (cardNo) => {
 module.exports = {
     createUser,
     searchUserByEmployeeNo,
+    getAllUsers,
     searchCardByCardNo,
     getUserAccessCount,
     decrementUserAccess,
