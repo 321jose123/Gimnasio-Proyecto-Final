@@ -2,7 +2,7 @@ const { client } = require("../../db/databasepg");/**
  * Busca y retorna la información de un usuario a partir de su número de empleado.
  */
 
-const { deleteUserFromDevice } = require("../../services/userServices/buildUserDevice");
+const { deleteUserFromDevice, updateUserTimeAccessInDevice } = require("../../services/userServices/buildUserDevice");
 
 
 const outdatedUser = async (employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion) => {
@@ -236,7 +236,7 @@ const decrementUserAccess = async (employeeNo) => {
 
             if (accesosRestantes === 0) {
                 console.log(`⛔ Usuario ${employeeNo} ha sido desactivado por falta de accesos.`);
-                await updateUserStatus(employeeNo, false);
+                await updateUserTimeAccessInDevice(employeeNo, false);
             }
 
             return accesosRestantes;
@@ -251,6 +251,10 @@ const decrementUserAccess = async (employeeNo) => {
 };
 
 const updateUserStatus = async (employeeNo, status) => {
+
+    const fechaDesactivacion = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+    const cincoSegundosDespuesDeDesactivacion = DateTime.fromISO(fechaDesactivacion).plus({seconds: 5}).toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+
     console.log(`Intentando actualizar estado del usuario ${employeeNo} a: ${status ? 'Activo' : 'Desactivado'}`);
     try {
         // Actualizar estado en la base de datos
@@ -265,6 +269,8 @@ const updateUserStatus = async (employeeNo, status) => {
         
         if (!status) {
             console.log(`🚨 Usuario ${employeeNo} desactivado, eliminando del dispositivo.`);
+            const updateUserTimeAccessInDBResponse = await updateUserAccessTime(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
+            
             await deleteUserFromDevice(employeeNo);
             console.log(`✔️ Usuario ${employeeNo} desactivado del dispositivo.`);
             console.log('Usuario eliminado del dispositivo:', await deleteUserFromDevice(employeeNo));
