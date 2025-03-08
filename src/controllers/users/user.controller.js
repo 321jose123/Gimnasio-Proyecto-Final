@@ -10,6 +10,9 @@ const { buildUserObjects } = require('../../services/userServices/buildUserObjet
 const { createUserInDevice, handleUserCards, handleUserProfileImage, deleteUserFromDevice, updateUserTimeAccessInDevice } = require('../../services/userServices/buildUserDevice');
 const { updateUserAccesses } = require('../../models/users/usersEditAccess.model');
 
+const { DateTime } = require("luxon");
+
+
 const { API_USERNAME, API_PASSWORD } = process.env;
 
 const { searchUser } = require('./searchUser');
@@ -431,6 +434,12 @@ const updateUserInfo = async (req, res) => {
  */
 
 const updateUserStatus = async (req, res) => {
+
+  const fechaDesactivacion = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+    const cincoSegundosDespuesDeDesactivacion = DateTime.fromISO(fechaDesactivacion).plus({seconds: 5}).toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+
+    console.log(fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
+
   try {
     const { employeeNo, status } = req.body;
     // Buscar al usuario por su número de empleado
@@ -440,7 +449,12 @@ const updateUserStatus = async (req, res) => {
     }
     if (status) {
       // Crear o actualizar el usuario en el dispositivo
-      const createUserResponse = await createUserInDevice(user);
+      // const createUserResponse = await createUserInDevice(user);
+      // if (createUserResponse.error) {
+      //   return res.status(createUserResponse.statusCode || 500).json(createUserResponse);
+      // }
+
+      const createUserResponse = await updateUserTimeAccessInDevice(employeeNo, user.valid_begin_time, user.valid_end_time);
       if (createUserResponse.error) {
         return res.status(createUserResponse.statusCode || 500).json(createUserResponse);
       }
@@ -459,7 +473,7 @@ const updateUserStatus = async (req, res) => {
       }
     } else {
       // Eliminar el usuario del dispositivo
-      const deleteResponse = await deleteUserFromDevice(employeeNo);
+      const deleteResponse = await updateUserTimeAccessInDevice(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
       if (deleteResponse.error) {
         return res.status(deleteResponse.statusCode || 500).json(deleteResponse);
       }

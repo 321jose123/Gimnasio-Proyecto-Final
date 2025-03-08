@@ -38,7 +38,7 @@ const createUserInDevice = async (user) => {
       }
     };
 
-    const response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
+    const response = await apiService.post(API_URL_UPDATE_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
     console.log('Usuario creado en el dispositivo:', response);
     return { success: true };
   } catch (apiError) {

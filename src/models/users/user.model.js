@@ -1,7 +1,25 @@
 const { client } = require("../../db/databasepg");/**
  * Busca y retorna la información de un usuario a partir de su número de empleado.
  */
+
 const { deleteUserFromDevice } = require("../../services/userServices/buildUserDevice");
+
+
+const outdatedUser = async (employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion) => {
+    
+
+    const query = `
+        UPDATE users
+        SET valid_begin_time = $2, 
+        valid_end_time = $3
+        WHERE employee_no = $1
+        RETURNING *;
+    `;
+    const values = [employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion];
+    const result = await client.query(query, values);
+    return result.rows.length > 0 ? result.rows[0] : null;
+};
+
 const searchUserByEmployeeNo = async (employeeNo) => {
     const query = `
         SELECT * FROM users
@@ -18,7 +36,7 @@ const getAllUsers = async (page = 1, pageSize = 10) => {
 
     const query = `
         SELECT * FROM users
-        ORDER BY employee_no  -- Asegúrate de ordenar los usuarios de alguna manera (por ejemplo, por ID)
+        ORDER BY employee_no
         LIMIT $1 OFFSET $2
     `;
     const values = [pageSize, offset];
@@ -313,4 +331,5 @@ module.exports = {
     updateUserStatus,
     updateUserAccessTime,
     updateUser,
+    outdatedUser,
 };
