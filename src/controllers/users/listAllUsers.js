@@ -1,8 +1,4 @@
-const { API_URL_SEARCH_USER } = require('../../../config');
 const usersModels = require('../../models/users/users.models');
-const { apiService } = require('../../services/apiServices');
-
-const { API_USERNAME, API_PASSWORD } = process.env;
 
 const listAllUsers = async (req, res) => {
     const page = req.query.page || 1;

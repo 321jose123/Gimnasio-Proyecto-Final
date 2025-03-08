@@ -32,9 +32,6 @@ const eventsCapture = async (req, res) => {
                 "timeReverseOrder": true
             }
         };
-        
-        console.log("Solicitud enviada a la API:", jsondata);
-        console.log("inicio día:", hora_inicio_utc);
 
         let eventsUserCapture;
         try {
