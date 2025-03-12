@@ -2,7 +2,8 @@ const { client } = require("../../db/databasepg");/**
  * Busca y retorna la información de un usuario a partir de su número de empleado.
  */
 
-const { deleteUserFromDevice, updateUserTimeAccessInDevice } = require("../../services/userServices/buildUserDevice");
+const { updateUserTimeAccessInDevice } = require("../../services/userServices/buildUserDevice");
+const { DateTime } = require("luxon");
 
 
 const outdatedUser = async (employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion) => {
@@ -236,7 +237,19 @@ const decrementUserAccess = async (employeeNo) => {
 
             if (accesosRestantes === 0) {
                 console.log(`⛔ Usuario ${employeeNo} ha sido desactivado por falta de accesos.`);
-                await updateUserTimeAccessInDevice(employeeNo, false);
+                const fechaDesactivacion = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+                const cincoSegundosDespuesDeDesactivacion = DateTime.fromISO(fechaDesactivacion).plus({seconds: 5}).toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+                const updateUserStatusResponse = await updateUserStatus(employeeNo, false);
+                if (updateUserStatusResponse.error) {
+                    console.error('Error al desactivar el usuario en el dispositivo:', updateUserStatusResponse.error);
+                }
+                const updateUserResponse = await updateUserTimeAccessInDevice(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
+
+                if (updateUserResponse.error) {
+                    console.error('Error al actualizar el usuario en el dispositivo:', updateUserResponse.error);
+                }
+                console.log("updateUserResponse", updateUserResponse);
+                
             }
 
             return accesosRestantes;
@@ -271,9 +284,8 @@ const updateUserStatus = async (employeeNo, status) => {
             console.log(`🚨 Usuario ${employeeNo} desactivado, eliminando del dispositivo.`);
             const updateUserTimeAccessInDBResponse = await updateUserAccessTime(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
             
-            await deleteUserFromDevice(employeeNo);
+            // await deleteUserFromDevice(employeeNo);
             console.log(`✔️ Usuario ${employeeNo} desactivado del dispositivo.`);
-            console.log('Usuario eliminado del dispositivo:', await deleteUserFromDevice(employeeNo));
         }
 
         if (result.rows.length > 0) {

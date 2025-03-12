@@ -7,7 +7,7 @@ const { validateDateRange } = require('../../helpers/validate.helpers');
 const UserModel = require('../../models/users/users.models');
 const { handleError } = require('../../services/errors/handleErrors');
 const { buildUserObjects } = require('../../services/userServices/buildUserObjet');
-const { createUserInDevice, handleUserCards, handleUserProfileImage, deleteUserFromDevice, updateUserTimeAccessInDevice } = require('../../services/userServices/buildUserDevice');
+const { createUserInDevice, handleUserCards, handleUserProfileImage, updateUserTimeAccessInDevice } = require('../../services/userServices/buildUserDevice');
 const { updateUserAccesses } = require('../../models/users/usersEditAccess.model');
 
 const { DateTime } = require("luxon");
@@ -386,7 +386,7 @@ const updateUserInfo = async (req, res) => {
       email: email,
       phoneNumber: phoneNumber,
       address: address,
-      city: city,
+      city: city ? userParams.city : null,
       country: country,
       dateOfBirth: dateOfBirth,
       active: userParams.active,
@@ -395,6 +395,8 @@ const updateUserInfo = async (req, res) => {
 
     // Llamar al modelo para actualizar el usuario
     const result = await UserModel.updateUser(userData);
+    const updateUserInDevice = await updateUserTimeAccessInDevice(employeeNo, userData.validBeginTime, userData.validEndTime);  
+    console.log('updateUserInDevice:', updateUserInDevice);
 
     // Verificar el resultado
     if (result.error) {
@@ -447,12 +449,19 @@ const updateUserStatus = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
-    if (status) {
+    if (status === true) {
       // Crear o actualizar el usuario en el dispositivo
       // const createUserResponse = await createUserInDevice(user);
       // if (createUserResponse.error) {
       //   return res.status(createUserResponse.statusCode || 500).json(createUserResponse);
       // }
+
+
+      console.log("usuario:", user);
+      console.log("usuario valid_begin_time:", user.valid_begin_time);
+      console.log("usuario valid_end_time:", user.valid_end_time);
+      
+      
 
       const createUserResponse = await updateUserTimeAccessInDevice(employeeNo, user.valid_begin_time, user.valid_end_time);
       if (createUserResponse.error) {
@@ -473,6 +482,8 @@ const updateUserStatus = async (req, res) => {
       }
     } else {
       // Eliminar el usuario del dispositivo
+      console.log("🚨 Usuario desactivado, eliminando del dispositivo.");
+      
       const deleteResponse = await updateUserTimeAccessInDevice(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
       if (deleteResponse.error) {
         return res.status(deleteResponse.statusCode || 500).json(deleteResponse);

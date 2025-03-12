@@ -74,6 +74,7 @@ const updateUserTimeAccessInDevice = async (employeeNo, beginTime, endTime) => {
     return { success: true };
   } catch (apiError) {
     console.error('Error: el usuario no se pudo actualizar:', apiError);
+    console.log('Error: el usuario no se pudo actualizar:', apiError.error);
     return {
       error: true,
       statusCode: 409,

@@ -13,10 +13,10 @@ module.exports = {
   TIME_SYNC : 10,
 
   //TODO: CONEXIÓN CON DATABASE CONFIG
-  db_host: '192.168.90.110',
+  db_host: '192.168.80.198',
   db_port: 5432,
   db_user: 'postgres',
-  db_password: '1234',
+  db_password: 'Cse12345%',
   db_database: 'DB_HK_CSE',
 
   //* Horario empresa
