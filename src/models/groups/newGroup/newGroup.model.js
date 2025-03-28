@@ -14,7 +14,7 @@ const newGroupModel = async (groupName) => {
         console.log("sanitizedGroupName", sanitizedGroupName);
         console.log(checkResult.rowCount > 0);
 
-        const insertQuery = 'INSERT INTO groups (group_name, created_at) VALUES ($1, NOW()) RETURNING id, group_name, created_at';
+        const insertQuery = 'INSERT INTO groups (group_name) VALUES ($1) RETURNING id, group_name';
         const insertResult = await client.query(insertQuery, [sanitizedGroupName]);
 
         await client.query('COMMIT');
