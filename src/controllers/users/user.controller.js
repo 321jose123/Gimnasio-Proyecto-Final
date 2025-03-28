@@ -17,6 +17,7 @@ const { API_USERNAME, API_PASSWORD } = process.env;
 
 const { searchUser } = require('./searchUser');
 const { listAllUsers } = require('./listAllUsers');
+const { searchGroupModel } = require('../../models/groups/searchGroup/searchGroup.model');
 
 /**
  * Obtiene las capacidades del usuario desde el dispositivo.
@@ -331,6 +332,7 @@ const addUserInfo = async (req, res) => {
     res.status(200).json({
       message: 'Usuario agregado exitosamente',
       data: {
+        newUser,
         response
       },
     });
@@ -360,13 +362,19 @@ const addUserInfo = async (req, res) => {
  * @throws {Error} - Lanza un error si ocurre algún problema al actualizar la base de datos.
  */
 const updateUserInfo = async (req, res) => {
-  const { employeeNo, name, email, phoneNumber, address, city, country, dateOfBirth, Valid } = req.body;
+  const { employeeNo, name, email, phoneNumber, address, city, country, dateOfBirth, Valid, groupID } = req.body;
 
   try {
     // Verificamos si el usuario existe
     const userParams = await UserModel.searchUserByEmployeeNo(employeeNo);
     if (!userParams) {
       return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    const existingGroup = await searchGroupModel(groupID);
+
+    if (!existingGroup) {
+      return res.status(404).json({ message: 'Grupo no encontrado.' });
     }
 
     // Crear el objeto con los parámetros necesarios
@@ -391,6 +399,7 @@ const updateUserInfo = async (req, res) => {
       dateOfBirth: dateOfBirth,
       active: userParams.active,
       accesosDisponibles: userParams.accesos_disponibles,
+      groupID: groupID
     };
 
     // Llamar al modelo para actualizar el usuario

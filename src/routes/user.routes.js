@@ -6,12 +6,14 @@ const streamingRoutes = require('./streamingRoutes/streamingRoutes');
 const fingerRoutes = require('./fingerPrintRoutes/fingerPrintRoutes');
 const cardRoutes = require('./cardRoutes/cardRoutes');
 const eventsRoutes = require('./systemEvents/systemEvents');
+const groupsRoutes = require('./groupRoutes/groupRoutes');
 
 router.use('/user', userRoutes);
 router.use('/fingerprint', fingerRoutes );
 router.use('/card', cardRoutes);
 router.use('/streaming', streamingRoutes);
 router.use('/events', eventsRoutes)
+router.use('/groups', groupsRoutes)
 
 
 module.exports = router;

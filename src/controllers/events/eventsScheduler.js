@@ -16,7 +16,7 @@ const startEventScheduler = () => {
             try {
                 const response = await axios.post('http://localhost:3000/api/events/userEvents');
             } catch (error) {
-                console.error("❌ Error en la ejecución de la petición:", error.message);
+                console.error(`❌ Error en la ejecución de la petición: ${error.message} - Código de error: ${error.code || 'N/A'} - Respuesta del servidor: ${error.response?.data || 'N/A'}`);
             }
         });
         
