@@ -469,14 +469,11 @@ const updateUserStatus = async (req, res) => {
       console.log("usuario:", user);
       console.log("usuario valid_begin_time:", user.valid_begin_time);
       console.log("usuario valid_end_time:", user.valid_end_time);
-      
-      
 
       const createUserResponse = await updateUserTimeAccessInDevice(employeeNo, user.valid_begin_time, user.valid_end_time);
       if (createUserResponse.error) {
         return res.status(createUserResponse.statusCode || 500).json(createUserResponse);
       }
-      
       // Manejar la imagen del perfil del usuario
       const imageResponse = await handleUserProfileImage(employeeNo);
       if (imageResponse.error) {

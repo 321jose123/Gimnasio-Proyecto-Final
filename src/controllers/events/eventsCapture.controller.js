@@ -1,7 +1,7 @@
 const { API_URL_DEVICE_EVENTS } = require('../../../config');
 const { apiService } = require('../../services/apiServices');
 const { insertEvent, getAllEvents } = require('../../models/events/events.models');
-const { getUserAccessCount, decrementUserAccess } = require('../../models/users/user.model');
+const { getUserAccessCount, decrementUserAccess, getUserDailyAccessCount, decrementUserDailyAccess } = require('../../models/users/user.model');
 const { API_USERNAME, API_PASSWORD } = process.env;
 
 const searchID = `consulta_eventos`;
@@ -38,7 +38,7 @@ const eventsCapture = async (req, res) => {
             eventsUserCapture = await apiService.post(API_URL_DEVICE_EVENTS, API_USERNAME, API_PASSWORD, jsondata, "application/json");
         } catch (error) {
             console.error("Error al capturar eventos del dispositivo:", error);
-            return res.status(500).json({ 
+            return res.status(500).json({
                 message: 'Error capturando evento en dispositivo',
                 status: 'error',
                 error: error.message,
@@ -71,16 +71,29 @@ const eventsCapture = async (req, res) => {
                 }
 
                 const accesosDisponibles = await getUserAccessCount(evento.employeeNoString);
+                const accesosDiarios = await getUserDailyAccessCount(evento.employeeNoString);
 
-                if (accesosDisponibles > 0) {
-                    console.log(`✅ Usuario ${evento.employeeNoString} tiene ${accesosDisponibles} accesos disponibles.`);
-                    
-                    // Descontar un acceso disponible
-                    await decrementUserAccess(evento.employeeNoString);
-                    console.log(`🔽 Se descontó 1 acceso al usuario ${evento.employeeNoString}. Le quedan ${accesosDisponibles - 1}.`);
 
+                if (accesosDiarios > 0) {
+                    // Si hay accesos diarios disponibles
+
+                    if (accesosDisponibles > 0) {
+                        console.log(`✅ Usuario ${evento.employeeNoString} tiene ${accesosDisponibles} accesos disponibles y ${accesosDiarios} accesos diarios.`);
+
+                        // Descontar ambos tipos de acceso
+                        await decrementUserAccess(evento.employeeNoString);
+                        await decrementUserDailyAccess(evento.employeeNoString);
+
+                        console.log(`🔽 Se descontó 1 acceso al usuario ${evento.employeeNoString}. Le quedan ${accesosDisponibles - 1}.`);
+                        console.log(`🔽 Se descontó 1 acceso diario al usuario ${evento.employeeNoString}. Le quedan ${accesosDiarios - 1}.`);
+                    } else {
+                        console.log(`⛔ Usuario ${evento.employeeNoString} tiene accesos diarios pero no disponibles. Solo se descuenta acceso diario.`);
+                        // Solo descontar acceso diario
+                        await decrementUserDailyAccess(evento.employeeNoString);
+                        console.log(`🔽 Se descontó 1 acceso diario al usuario ${evento.employeeNoString}. Le quedan ${accesosDiarios - 1}.`);
+                    }
                 } else {
-                    console.log(`⛔ Usuario ${evento.employeeNoString} no tiene accesos disponibles. Evento registrado pero sin descuento.`);
+                    console.log(`⛔ Usuario ${evento.employeeNoString} no tiene accesos diarios disponibles. No se descuenta ningún acceso.`);
                 }
             }
 
@@ -92,7 +105,7 @@ const eventsCapture = async (req, res) => {
 
             handleInvalidEvent(eventosConTarjeta);
 
-            return res.status(200).json({ 
+            return res.status(200).json({
                 status: 'success',
                 message: 'Mostrando lista de eventos capturados',
                 totalEventos: eventsUserCapture.AcsEvent.InfoList.length,
@@ -117,7 +130,7 @@ const eventsCapture = async (req, res) => {
 
     } catch (error) {
         console.error("Error en el proceso de captura:", error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error general en la captura de eventos',
             status: 'error',
             error: error.message,
@@ -128,7 +141,7 @@ const eventsCapture = async (req, res) => {
 const getAllEventsCapture = async (req, res) => {
     try {
         const events = await getAllEvents();
-        return res.status(200).json({ 
+        return res.status(200).json({
             status: 'success',
             message: 'Mostrando lista de eventos capturados',
             totalEventos: events.length,
@@ -136,7 +149,7 @@ const getAllEventsCapture = async (req, res) => {
         });
     } catch (error) {
         console.error("Error en el proceso de captura:", error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error general en la captura de eventos',
             status: 'error',
             error: error.message,

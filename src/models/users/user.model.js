@@ -33,6 +33,37 @@ const searchUserByEmployeeNo = async (employeeNo) => {
     return result.rows.length > 0 ? result.rows[0] : null;
 };
 
+/**
+ * Busca usuarios con 2 accesos diarios que tengan accesos disponibles y estén inactivos.
+ * @returns {Promise<Array>} - Array con los usuarios que cumplen los criterios
+ */
+const getUsersWithTwoDailyAccessesForActivation = async () => {
+    const query = `
+        SELECT * FROM users
+        WHERE acc_diarios = 2 
+        AND accesos_disponibles > 0 
+        AND active = false
+        ORDER BY employee_no;
+    `;
+
+    try {
+        const result = await client.query(query);
+
+        if (result.rows.length > 0) {
+            console.log(`🔍 Se encontraron ${result.rows.length} usuarios con 2 accesos diarios disponibles para activación.`);
+        } else {
+            console.log('⚠️ No se encontraron usuarios con 2 accesos diarios que cumplan los criterios de activación.');
+        }
+
+        return result.rows;
+    } catch (error) {
+        console.error('❌ Error al obtener usuarios con 2 accesos diarios para activación:', error.message);
+        throw new Error(`Error al obtener usuarios con 2 accesos diarios: ${error.message}`);
+    }
+};
+
+
+
 const getAllUsers = async (page = 1, pageSize = 10) => {
 
     const offset = (page - 1) * pageSize;
@@ -69,7 +100,7 @@ const createUser = async (userInfo) => {
     const {
         employeeNo, name, userType, doorRight, Valid, RightPlan,
         localUIUserType, userVerifyMode, addUser, gender, email,
-        phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, groupID
+        phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, groupID, acc_diarios
     } = userInfo;
 
     const sanitizedGroupID = groupID ? parseInt(groupID) : null;
@@ -113,13 +144,13 @@ const createUser = async (userInfo) => {
           valid_enable, valid_begin_time, valid_end_time,
           door_no, plan_template_no,
           local_ui_user_type, user_verify_mode, add_user, gender,
-          email, phone_number, address, city, country, date_of_birth, active, accesos_disponibles, group_id
+          email, phone_number, address, city, country, date_of_birth, active, accesos_disponibles, group_id, acc_diarios
       ) VALUES (
           $1, $2, $3, $4,
           $5, $6, $7,
           $8, $9,
           $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20, $21, $22
+          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
       )`;
 
 
@@ -127,6 +158,7 @@ const createUser = async (userInfo) => {
             employeeNo, name, userType, doorRight, Valid.enable, Valid.beginTime, Valid.endTime,
             doorNo, planTemplateNo, localUIUserType, userVerifyMode, addUser, gender, email,
             phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, groupID,
+            acc_diarios
         ];
 
         const result = await client.query(query, values);
@@ -245,6 +277,76 @@ const getUserAccessCount = async (employeeNo) => {
     }
 };
 
+const getUserDailyAccessCount = async (employeeNo) => {
+    const query = `
+        SELECT acc_diarios FROM public.users
+        WHERE employee_no = $1
+        LIMIT 1;
+    `;
+    try {
+        const result = await client.query(query, [employeeNo]);
+        return result.rows.length > 0 ? result.rows[0].acc_diarios : 0;
+    } catch (error) {
+        console.error("Error al obtener accesos disponibles:", error.message);
+        return 0;
+    }
+};
+
+const restartUserDailyAccess = async () => {
+    const query = `
+        UPDATE public.users
+        SET acc_diarios = 2;
+    `;
+    try {
+        await client.query(query);
+        console.log("Accesos diarios reiniciados.");
+        return true;
+    } catch (error) {
+        console.error("Error al reiniciar accesos diarios:", error.message);
+    }
+}
+
+const decrementUserDailyAccess = async (employeeNo) => {
+    const query = `
+        UPDATE public.users
+        SET acc_diarios = acc_diarios - 1
+        WHERE employee_no = $1 AND acc_diarios > 0
+        RETURNING acc_diarios;
+    `;
+    try {
+        const result = await client.query(query, [employeeNo]);
+
+        if (result.rows.length > 0) {
+            const accesosRestantes = result.rows[0].acc_diarios;
+
+            console.log(`🔽 Usuario ${employeeNo} ahora tiene ${accesosRestantes} accesos disponibles.`);
+
+            if (accesosRestantes === 0) {
+                console.log(`⛔ Usuario ${employeeNo} ha sido desactivado por falta de accesos.`);
+                const fechaDesactivacion = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+                const cincoSegundosDespuesDeDesactivacion = DateTime.fromISO(fechaDesactivacion).plus({ seconds: 5 }).toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+                const updateUserStatusResponse = await updateUserStatusDaily(employeeNo, false);
+                if (updateUserStatusResponse.error) {
+                    console.error('Error al desactivar el usuario en el dispositivo:', updateUserStatusResponse.error);
+                }
+                const updateUserResponse = await updateUserTimeAccessInDevice(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
+
+                if (updateUserResponse.error) {
+                    console.error('Error al actualizar el usuario en el dispositivo:', updateUserResponse.error);
+                }
+                console.log("updateUserResponse", updateUserResponse);
+
+            }
+
+            return accesosRestantes;
+        }
+    } catch (error) {
+        console.error(`Error al decrementar el acceso diario del usuario ${employeeNo}:`, error.message);
+        return null;
+    }
+};
+
+
 const decrementUserAccess = async (employeeNo) => {
     const query = `
         UPDATE public.users
@@ -326,6 +428,32 @@ const updateUserStatus = async (employeeNo, status) => {
     }
 };
 
+const updateUserStatusDaily = async (employeeNo, status) => {
+    console.log(`Intentando actualizar estado del usuario ${employeeNo} a: ${status ? 'Activo' : 'Desactivado'}`);
+    try {
+        // Actualizar estado en la base de datos
+        const query = `
+            UPDATE public.users
+            SET active = $1
+            WHERE employee_no = $2
+            RETURNING *;
+        `;
+        console.log(`Ejecutando query: ${query}`);
+        const result = await client.query(query, [status, employeeNo]);
+
+        if (result.rows.length > 0) {
+            console.log(`✔️ Estado del usuario ${employeeNo} actualizado a: ${status ? 'Activo' : 'Desactivado'}`);
+            return result.rows[0];
+        } else {
+            console.warn(`⚠️ No se encontró el usuario ${employeeNo} para actualizar.`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error al actualizar estado del usuario ${employeeNo}:`, error.message);
+        return null;
+    }
+};
+
 const updateUserAccessTime = async (employeeNo, beginTime, endTime) => {
     console.log(`Intentando actualizar acceso del usuario ${employeeNo} a: ${beginTime} - ${endTime}`);
 
@@ -367,12 +495,17 @@ const searchCardByCardNo = async (cardNo) => {
 module.exports = {
     createUser,
     searchUserByEmployeeNo,
+    getUsersWithTwoDailyAccessesForActivation,
     getAllUsers,
     searchCardByCardNo,
     getUserAccessCount,
     decrementUserAccess,
     updateUserStatus,
+    updateUserStatusDaily,
     updateUserAccessTime,
     updateUser,
     outdatedUser,
+    restartUserDailyAccess,
+    getUserDailyAccessCount,
+    decrementUserDailyAccess,
 };

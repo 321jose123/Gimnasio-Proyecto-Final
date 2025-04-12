@@ -57,7 +57,8 @@ const buildUserObjects = (data) => {
     dateOfBirth: formatToUTC(dateOfBirth),
     active,
     accesosDisponibles,
-    groupID: groupID || 1
+    groupID: groupID || 1, 
+    acc_diarios: 2
   };
 
   const jsonData = {

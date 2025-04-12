@@ -59,6 +59,8 @@ const createUserInDevice = async (user) => {
 };
 
 const updateUserTimeAccessInDevice = async (employeeNo, beginTime, endTime) => {
+  console.log(`Intentando actualizar acceso del usuario ${employeeNo} a: ${beginTime} - ${endTime}`);
+
   try {
     const jsonData = {
       userInfo: {
