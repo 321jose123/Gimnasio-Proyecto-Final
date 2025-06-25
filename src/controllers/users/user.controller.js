@@ -204,10 +204,10 @@ const deleteUserImage = async (req, res) => {
   }
 
   const jsonData = {
-    "faceLibType":"blackFD",
-    "FDID":"1",
-    "FPID":employeeNo,
-    "deleteFP":true
+    "faceLibType": "blackFD",
+    "FDID": "1",
+    "FPID": employeeNo,
+    "deleteFP": true
   };
 
   let response;
@@ -224,12 +224,12 @@ const deleteUserImage = async (req, res) => {
 };
 
 
-  /**
-   * Obtiene la imagen de perfil del usuario en formato JPEG.
-   * @returns {Promise<Response>}
-   * @property {String} Content-Type - El tipo de contenido de la respuesta. En este caso, siempre es "image/jpeg".
-   * @property {Buffer} body - El contenido de la respuesta. En este caso, la imagen en formato JPEG.
-   */
+/**
+ * Obtiene la imagen de perfil del usuario en formato JPEG.
+ * @returns {Promise<Response>}
+ * @property {String} Content-Type - El tipo de contenido de la respuesta. En este caso, siempre es "image/jpeg".
+ * @property {Buffer} body - El contenido de la respuesta. En este caso, la imagen en formato JPEG.
+ */
 const getUserImageAsJPEG = async (req, res) => {
   try {
     const { employeeNo } = req.body;
@@ -326,16 +326,16 @@ const addUserInfo = async (req, res) => {
     }
 
     try {
-    const newUser = await UserModel.createUser(userData);
-    const response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
+      const newUser = await UserModel.createUser(userData);
+      const response = await apiService.post(API_URL_ADD_USER, API_USERNAME, API_PASSWORD, jsonData, 'application/json');
 
-    res.status(200).json({
-      message: 'Usuario agregado exitosamente',
-      data: {
-        newUser,
-        response
-      },
-    });
+      res.status(200).json({
+        message: 'Usuario agregado exitosamente',
+        data: {
+          newUser,
+          response
+        },
+      });
     } catch (error) {
       console.error('Error al agregar el usuario:', error);
       res.status(500).json({
@@ -391,11 +391,11 @@ const updateUserInfo = async (req, res) => {
       userVerifyMode: userParams.user_verify_mode,
       addUser: userParams.add_user,
       gender: userParams.gender,
-      email: email,
-      phoneNumber: phoneNumber,
+      email: email ? email : userParams.email ? userParams.email : 'email@example.com',
+      phoneNumber: phoneNumber ? phoneNumber : userParams.phone_number ? userParams.phone_number : '1234567890',
       address: address,
-      city: city ? userParams.city : null,
-      country: country,
+      city: city ? city : userParams.city ? userParams.city : 'Bucaramanga',
+      country: country ? country : userParams.country ? userParams.country : 'Colombia',
       dateOfBirth: dateOfBirth,
       active: userParams.active,
       accesosDisponibles: userParams.accesos_disponibles,
@@ -404,7 +404,7 @@ const updateUserInfo = async (req, res) => {
 
     // Llamar al modelo para actualizar el usuario
     const result = await UserModel.updateUser(userData);
-    const updateUserInDevice = await updateUserTimeAccessInDevice(employeeNo, userData.validBeginTime, userData.validEndTime);  
+    const updateUserInDevice = await updateUserTimeAccessInDevice(employeeNo, userData.validBeginTime, userData.validEndTime);
     console.log('updateUserInDevice:', updateUserInDevice);
 
     // Verificar el resultado
@@ -447,9 +447,9 @@ const updateUserInfo = async (req, res) => {
 const updateUserStatus = async (req, res) => {
 
   const fechaDesactivacion = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
-    const cincoSegundosDespuesDeDesactivacion = DateTime.fromISO(fechaDesactivacion).plus({seconds: 5}).toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
+  const cincoSegundosDespuesDeDesactivacion = DateTime.fromISO(fechaDesactivacion).plus({ seconds: 5 }).toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
 
-    console.log(fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
+  console.log(fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
 
   try {
     const { employeeNo, status } = req.body;
@@ -480,7 +480,7 @@ const updateUserStatus = async (req, res) => {
         console.error('Error al manejar la imagen del perfil del usuario:', imageResponse.error);
         return res.status(imageResponse.statusCode || 500).json(imageResponse);
       }
-      
+
       // Manejar las tarjetas del usuario
       const cardResponse = await handleUserCards(employeeNo);
       if (cardResponse.error) {
@@ -489,7 +489,7 @@ const updateUserStatus = async (req, res) => {
     } else {
       // Eliminar el usuario del dispositivo
       console.log("🚨 Usuario desactivado, eliminando del dispositivo.");
-      
+
       const deleteResponse = await updateUserTimeAccessInDevice(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
       if (deleteResponse.error) {
         return res.status(deleteResponse.statusCode || 500).json(deleteResponse);
@@ -516,32 +516,32 @@ const updateUserAccessesService = async (req, res) => {
   const { employeeNo, accesses, beginTime, endTime } = req.body;
 
   try {
-      const existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
+    const existingUser = await UserModel.searchUserByEmployeeNo(employeeNo);
 
-      if (existingUser) {
-        try {
-          const updateUserAccessInDeviceResponse = await updateUserTimeAccessInDevice(employeeNo, beginTime, endTime);
-          console.log('Accesos actualizados en el dispositivo:', updateUserAccessInDeviceResponse);
-          const updateUserTimeAccessInDBResponse = await UserModel.updateUserAccessTime(employeeNo, beginTime, endTime);
-          console.log('Accesos actualizados en la base de datos:', updateUserTimeAccessInDBResponse);
-          const updatedUser = await updateUserAccesses(employeeNo, accesses);
-          console.log('Accesos actualizados en la base de datos:', updatedUser);
-          return res.status(200).json({
-            message: 'Accesos actualizados exitosamente en la base de datos.',
-            data: updatedUser,
-          });
-        } catch (error) {
-          console.error('Error al actualizar los accesos del usuario:', error);
-          return res.status(500).json({
-            message: 'Error al actualizar los accesos del usuario.',
-            error: error.message,
-          });
-        }
+    if (existingUser) {
+      try {
+        const updateUserAccessInDeviceResponse = await updateUserTimeAccessInDevice(employeeNo, beginTime, endTime);
+        console.log('Accesos actualizados en el dispositivo:', updateUserAccessInDeviceResponse);
+        const updateUserTimeAccessInDBResponse = await UserModel.updateUserAccessTime(employeeNo, beginTime, endTime);
+        console.log('Accesos actualizados en la base de datos:', updateUserTimeAccessInDBResponse);
+        const updatedUser = await updateUserAccesses(employeeNo, accesses);
+        console.log('Accesos actualizados en la base de datos:', updatedUser);
+        return res.status(200).json({
+          message: 'Accesos actualizados exitosamente en la base de datos.',
+          data: updatedUser,
+        });
+      } catch (error) {
+        console.error('Error al actualizar los accesos del usuario:', error);
+        return res.status(500).json({
+          message: 'Error al actualizar los accesos del usuario.',
+          error: error.message,
+        });
       }
-      console.log('El usuario no existe en la base de datos.');
-      return res.status(404).json({
-        message: 'El usuario no existe en la base de datos.',
-      });
+    }
+    console.log('El usuario no existe en la base de datos.');
+    return res.status(404).json({
+      message: 'El usuario no existe en la base de datos.',
+    });
 
   } catch (error) {
     console.error('Error al actualizar los accesos del usuario:', error);
