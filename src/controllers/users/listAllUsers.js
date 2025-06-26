@@ -1,4 +1,4 @@
-const usersModels = require('../../models/users/users.models');
+const usersModels = require('../../models/users/user.model');
 
 const listAllUsers = async (req, res) => {
     const page = req.query.page || 1;

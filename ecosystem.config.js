@@ -2,15 +2,16 @@
 module.exports = {
   apps: [{
     name: 'BACKEND-LIGA',
-    script: './src/index.js',  // Ruta relativa desde la ubicación del ecosistema
-    interpreter: 'node',
+    script: 'npm',
+    args: 'start',
+    interpreter: 'none',
     cwd: '/home/backend_liga_natacion/BACKEND_HIKVISION',
     autorestart: true,
     restart_delay: 5000,
     max_restarts: 10,
     min_uptime: 5000,
     env: {
-      NODE_ENV: 'production',
+      NODE_ENV: 'development',
       DB_RETRIES: 5,
       DB_RETRY_DELAY: 5000
     },

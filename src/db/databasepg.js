@@ -1,6 +1,7 @@
 const { Client } = require('pg');
 const { db_host, db_port, db_user, db_password, db_database } = require('../../config');
 
+// Inicializar el cliente inmediatamente para evitar undefined
 const client = new Client({
     host: db_host,
     port: db_port,

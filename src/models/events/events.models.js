@@ -2,6 +2,12 @@ const { client } = require('../../db/databasepg');
 
 const insertEvent = async (event) => {
     try {
+        // Verificar que el cliente esté disponible
+        if (!client) {
+            console.error('Error: Cliente de base de datos no disponible');
+            return false;
+        }
+
         const query = `
             INSERT INTO eventos_accesos (employee_no, nombre, card_no, timestamp, door_no, serial_no, user_type, verify_mode, mask_status, picture_url)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -27,12 +33,19 @@ const insertEvent = async (event) => {
 
     } catch (error) {
         console.error('Error insertando evento:', error);
+        console.error('Cliente disponible:', !!client);
         return false;
     }
 };
 
 const getAllEvents = async () => {
     try {
+        // Verificar que el cliente esté disponible
+        if (!client) {
+            console.error('Error: Cliente de base de datos no disponible');
+            return [];
+        }
+
         const query = `
             SELECT * FROM eventos_accesos
             ORDER BY timestamp DESC;
@@ -43,12 +56,13 @@ const getAllEvents = async () => {
 
     } catch (error) {
         console.error('Error consultando eventos:', error);
+        console.error('Cliente disponible:', !!client);
         return [];
     }
 };
 
-module.exports = { 
-    insertEvent, 
-    getAllEvents 
+module.exports = {
+    insertEvent,
+    getAllEvents
 };
 
