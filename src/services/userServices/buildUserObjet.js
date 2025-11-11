@@ -1,6 +1,7 @@
 const { formatToUTC } = require("../../helpers/validate.helpers");
 
 const buildUserObjects = (data) => {
+  // 1. AÑADIMOS face_image A LA DESTRUCTURACIÓN
   const {
     employeeNo,
     name,
@@ -21,6 +22,7 @@ const buildUserObjects = (data) => {
     active = true,
     accesosDisponibles,
     groupID,
+    face_image // <- Aquí está
   } = data;
 
   const { beginTime, endTime } = Valid || {};
@@ -58,9 +60,11 @@ const buildUserObjects = (data) => {
     active,
     accesosDisponibles,
     groupID: groupID || 1, 
-    acc_diarios: 2
+    acc_diarios: 2,
+    face_image // 2. AÑADIMOS face_image AL OBJETO PARA LA BD
   };
 
+  // El objeto para el dispositivo no necesita la imagen, así que se mantiene igual.
   const jsonData = {
     userInfo: {
       employeeNo,
@@ -90,3 +94,4 @@ const buildUserObjects = (data) => {
 };
 
 module.exports = { buildUserObjects };
+

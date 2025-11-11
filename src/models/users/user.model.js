@@ -92,73 +92,107 @@ const getAllUsers = async (page = 1, pageSize = 10) => {
     }
 };
 
+/**
+ * Guardar imagen del rostro
+ */
+const saveDbImage = async (employeeNo, faceImage) => {
+    const query = `
+        UPDATE users 
+        SET face_image = $1 
+        WHERE employee_no = $2 
+        RETURNING *;
+    `;
+    const values = [faceImage, employeeNo];
+
+    try {
+        const result = await client.query(query, values);
+        if (result.rows.length === 0) {
+            throw new Error('No se encontró al usuario para actualizar la imagen.');
+        }
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error al guardar la imagen en la base de datos:', error);
+        throw new Error('Error al guardar la imagen en la base de datos: ' + error.message);
+    }
+};
+
 
 /**
  * Crea un nuevo usuario en la base de datos.
  */
 const createUser = async (userInfo) => {
+    // 1. Añadimos face_image a la desestructuración del objeto userInfo
     const {
-        employeeNo, name, userType, doorRight, Valid, RightPlan,
+        employeeNo, name, user_type, doorRight, Valid, RightPlan,
         localUIUserType, userVerifyMode, addUser, gender, email,
-        phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, groupID, acc_diarios
+        phoneNumber, address, city, country, dateOfBirth, active, 
+        accesosDisponibles, groupID, acc_diarios, face_image , suscripcion
     } = userInfo;
 
     const sanitizedGroupID = groupID ? parseInt(groupID) : null;
 
     try {
+        // --- Verificaciones existentes (sin cambios) ---
         const checkEmailQuery = `
-        SELECT EXISTS (
-            SELECT 1 FROM users WHERE email = $1
-        );
-    `;
+            SELECT EXISTS (
+                SELECT 1 FROM users WHERE email = $1
+            );
+        `;
         const emailExists = await client.query(checkEmailQuery, [email]);
         if (emailExists.rows[0].exists) {
             throw new Error('El correo electrónico ya está registrado.');
         }
 
         const checkPhoneQuery = `
-        SELECT EXISTS (
-            SELECT 1 FROM users WHERE phone_number = $1
-        );
-    `;
+            SELECT EXISTS (
+                SELECT 1 FROM users WHERE phone_number = $1
+            );
+        `;
         const phoneExists = await client.query(checkPhoneQuery, [phoneNumber]);
         if (phoneExists.rows[0].exists) {
             throw new Error('El número de teléfono ya está registrado.');
         }
+
         const doorNo = RightPlan && RightPlan[0] ? RightPlan[0].doorNo : null;
         const planTemplateNo = RightPlan && RightPlan[0] ? RightPlan[0].planTemplateNo : null;
 
         const checkGroupIDExist = `
-        SELECT EXISTS (
-            SELECT 1 FROM groups WHERE id = $1
-        );
-    `;
+            SELECT EXISTS (
+                SELECT 1 FROM groups WHERE id = $1
+            );
+        `;
         const groupIDExists = await client.query(checkGroupIDExist, [sanitizedGroupID]);
-        if (!groupIDExists.rows[0].exists) {
+        if (sanitizedGroupID && !groupIDExists.rows[0].exists) {
             throw new Error('El grupo no existe.');
         }
 
+        // 2. Actualizamos la consulta SQL para incluir la columna face_image
         const query = `
-      INSERT INTO users (
-          employee_no, name, user_type, door_right,
-          valid_enable, valid_begin_time, valid_end_time,
-          door_no, plan_template_no,
-          local_ui_user_type, user_verify_mode, add_user, gender,
-          email, phone_number, address, city, country, date_of_birth, active, accesos_disponibles, group_id, acc_diarios
-      ) VALUES (
-          $1, $2, $3, $4,
-          $5, $6, $7,
-          $8, $9,
-          $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
-      )`;
+          INSERT INTO users (
+              employee_no, name, user_type, door_right,
+              valid_enable, valid_begin_time, valid_end_time,
+              door_no, plan_template_no,
+              local_ui_user_type, user_verify_mode, add_user, gender,
+              email, phone_number, address, city, country, date_of_birth, 
+              active, accesos_disponibles, group_id, acc_diarios, face_image, suscripcion
+          ) VALUES (
+              $1, $2, $3, $4,
+              $5, $6, $7,
+              $8, $9,
+              $10, $11, $12, $13,
+              $14, $15, $16, $17, $18, $19, 
+              $20, $21, $22, $23, $24, $25
+          )RETURNING *;`;
 
-
+        // 3. Añadimos la variable face_image al array de valores
         const values = [
-            employeeNo, name, userType, doorRight, Valid.enable, Valid.beginTime, Valid.endTime,
-            doorNo, planTemplateNo, localUIUserType, userVerifyMode, addUser, gender, email,
-            phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, groupID,
-            acc_diarios
+            employeeNo, name, user_type, doorRight, 
+            Valid.enable, Valid.beginTime, Valid.endTime,
+            doorNo, planTemplateNo, 
+            localUIUserType, userVerifyMode, addUser, gender, 
+            email, phoneNumber, address, city, country, dateOfBirth, 
+            active, accesosDisponibles, sanitizedGroupID, acc_diarios, 
+            face_image, suscripcion 
         ];
 
         const result = await client.query(query, values);
@@ -167,14 +201,14 @@ const createUser = async (userInfo) => {
         console.log("Error al crear el usuario: " + error.message);
         throw new Error('Error al crear el usuario: ' + error.message);
     }
-
 };
+
 
 const updateUser = async (userData) => {
     const {
-        employeeNo, name, userType, doorRight, validEnable, validBeginTime, validEndTime,
+        employeeNo, name, user_type, doorRight, validEnable, validBeginTime, validEndTime,
         planTemplateNo, localUIUserType, userVerifyMode, addUser, gender, email,
-        phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, groupID
+        phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, groupID ,suscripcion, nota, registration_date
     } = userData;
 
     try {
@@ -227,15 +261,18 @@ const updateUser = async (userData) => {
           date_of_birth = $17,
           active = $18,
           accesos_disponibles = $19,
-          group_id = $20
-        WHERE employee_no = $21
+          group_id = $20,
+          suscripcion = $21,
+          nota = $22,               
+          registration_date = $23  
+        WHERE employee_no = $24    
         RETURNING *
       `;
 
         const values = [
-            name, userType, doorRight, validEnable, validBeginTime, validEndTime,
+            name, user_type, doorRight, validEnable, validBeginTime, validEndTime,
             planTemplateNo, localUIUserType, userVerifyMode, addUser, gender, email,
-            phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, groupID, employeeNo
+            phoneNumber, address, city, country, dateOfBirth, active, accesosDisponibles, groupID,suscripcion,nota, registration_date, employeeNo
         ];
 
         const result = await client.query(query, values);
@@ -261,6 +298,52 @@ const updateUser = async (userData) => {
     }
 };
 
+
+
+
+/**
+ * Obtiene la nota de un usuario específico.
+ * @param {string} employeeNo - El número de empleado del usuario.
+ * @returns {Promise<string|null>} La nota del usuario o null si no se encuentra.
+ */
+const getNoteByEmployeeNo = async (employeeNo) => {
+    const query = 'SELECT nota FROM users WHERE employee_no = $1;';
+    try {
+        const result = await client.query(query, [employeeNo]);
+        if (result.rows.length > 0) {
+            return result.rows[0].nota;
+        }
+        return null; // El usuario no fue encontrado
+    } catch (error) {
+        console.error('Error al obtener la nota del usuario:', error);
+        throw new Error('Error al obtener la nota del usuario: ' + error.message);
+    }
+};
+
+/**
+ * Crea o actualiza la nota de un usuario.
+ * @param {string} employeeNo - El número de empleado del usuario.
+ * @param {string} nota - El contenido de la nota.
+ * @returns {Promise<Object>} El usuario actualizado.
+ */
+const upsertNote = async (employeeNo, nota) => {
+    const query = `
+        UPDATE users 
+        SET nota = $1 
+        WHERE employee_no = $2 
+        RETURNING employee_no, name, nota;
+    `;
+    try {
+        const result = await client.query(query, [nota, employeeNo]);
+        if (result.rows.length === 0) {
+            throw new Error('Usuario no encontrado para añadir/actualizar la nota.');
+        }
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error al guardar la nota del usuario:', error);
+        throw new Error('Error al guardar la nota del usuario: ' + error.message);
+    }
+};
 
 const getUserAccessCount = async (employeeNo) => {
     const query = `
@@ -315,37 +398,18 @@ const decrementUserDailyAccess = async (employeeNo) => {
     `;
     try {
         const result = await client.query(query, [employeeNo]);
-
         if (result.rows.length > 0) {
             const accesosRestantes = result.rows[0].acc_diarios;
-
-            console.log(`🔽 Usuario ${employeeNo} ahora tiene ${accesosRestantes} accesos disponibles.`);
-
-            if (accesosRestantes === 0) {
-                console.log(`⛔ Usuario ${employeeNo} ha sido desactivado por falta de accesos.`);
-                const fechaDesactivacion = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
-                const cincoSegundosDespuesDeDesactivacion = DateTime.fromISO(fechaDesactivacion).plus({ seconds: 5 }).toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
-                const updateUserStatusResponse = await updateUserStatusDaily(employeeNo, false);
-                if (updateUserStatusResponse.error) {
-                    console.error('Error al desactivar el usuario en el dispositivo:', updateUserStatusResponse.error);
-                }
-                const updateUserResponse = await updateUserTimeAccessInDevice(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
-
-                if (updateUserResponse.error) {
-                    console.error('Error al actualizar el usuario en el dispositivo:', updateUserResponse.error);
-                }
-                console.log("updateUserResponse", updateUserResponse);
-
-            }
-
+            console.log(`🔽 Usuario ${employeeNo} ahora tiene ${accesosRestantes} accesos diarios.`);
+            // <<< SE ELIMINÓ LA LÓGICA DE DESACTIVACIÓN DE AQUÍ >>>
             return accesosRestantes;
         }
+        return null; // O 0 si prefieres
     } catch (error) {
         console.error(`Error al decrementar el acceso diario del usuario ${employeeNo}:`, error.message);
-        return null;
+        throw error; // Propagar error
     }
 };
-
 
 const decrementUserAccess = async (employeeNo) => {
     const query = `
@@ -356,75 +420,48 @@ const decrementUserAccess = async (employeeNo) => {
     `;
     try {
         const result = await client.query(query, [employeeNo]);
-
         if (result.rows.length > 0) {
             const accesosRestantes = result.rows[0].accesos_disponibles;
-
             console.log(`🔽 Usuario ${employeeNo} ahora tiene ${accesosRestantes} accesos disponibles.`);
-
-            if (accesosRestantes === 0) {
-                console.log(`⛔ Usuario ${employeeNo} ha sido desactivado por falta de accesos.`);
-                const fechaDesactivacion = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
-                const cincoSegundosDespuesDeDesactivacion = DateTime.fromISO(fechaDesactivacion).plus({ seconds: 5 }).toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
-                const updateUserStatusResponse = await updateUserStatus(employeeNo, false);
-                if (updateUserStatusResponse.error) {
-                    console.error('Error al desactivar el usuario en el dispositivo:', updateUserStatusResponse.error);
-                }
-                const updateUserResponse = await updateUserTimeAccessInDevice(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
-
-                if (updateUserResponse.error) {
-                    console.error('Error al actualizar el usuario en el dispositivo:', updateUserResponse.error);
-                }
-                console.log("updateUserResponse", updateUserResponse);
-
-            }
-
+             // <<< SE ELIMINÓ LA LÓGICA DE DESACTIVACIÓN DE AQUÍ >>>
             return accesosRestantes;
         } else {
-            console.warn(`⚠️ No se encontró registro de accesos para el usuario ${employeeNo}.`);
-            return 0;
+            // Podría ser que el usuario exista pero ya tenga 0 accesos.
+            // console.warn(`⚠️ No se descontó acceso para ${employeeNo} (posiblemente ya tenía 0).`);
+            return 0; // O null si prefieres
         }
     } catch (error) {
-        console.error("Error al descontar acceso:", error.message);
-        return 0;
+        console.error(`Error al descontar acceso para ${employeeNo}:`, error.message);
+        throw error; // Propagar error
     }
 };
 
+/**
+ * Modelo para actualizar el estado 'active' de un usuario en la base de datos.
+ * @param {string} employeeNo - El ID del usuario.
+ * @param {boolean} status - El nuevo estado (true para activo, false para inactivo).
+ * @returns {Promise<Object>} El objeto de usuario completo y actualizado.
+ */
 const updateUserStatus = async (employeeNo, status) => {
-
-    const fechaDesactivacion = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
-    const cincoSegundosDespuesDeDesactivacion = DateTime.fromISO(fechaDesactivacion).plus({ seconds: 5 }).toFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
-
-    console.log(`Intentando actualizar estado del usuario ${employeeNo} a: ${status ? 'Activo' : 'Desactivado'}`);
+    console.log(`[Modelo] Intentando actualizar estado BD del usuario ${employeeNo} a: ${status}`);
+    const query = `
+        UPDATE users
+        SET active = $1
+        WHERE employee_no = $2
+        RETURNING *;
+    `;
     try {
-        // Actualizar estado en la base de datos
-        const query = `
-            UPDATE public.users
-            SET active = $1
-            WHERE employee_no = $2
-            RETURNING *;
-        `;
-        console.log(`Ejecutando query: ${query}`);
         const result = await client.query(query, [status, employeeNo]);
-
-        if (!status) {
-            console.log(`🚨 Usuario ${employeeNo} desactivado, eliminando del dispositivo.`);
-            const updateUserTimeAccessInDBResponse = await updateUserAccessTime(employeeNo, fechaDesactivacion, cincoSegundosDespuesDeDesactivacion);
-
-            // await deleteUserFromDevice(employeeNo);
-            console.log(`✔️ Usuario ${employeeNo} desactivado del dispositivo.`);
-        }
-
         if (result.rows.length > 0) {
-            console.log(`✔️ Estado del usuario ${employeeNo} actualizado a: ${status ? 'Activo' : 'Desactivado'}`);
-            return result.rows[0];
+            console.log(`[Modelo] ✔️ Estado BD del usuario ${employeeNo} actualizado a: ${status}`);
+            return result.rows[0]; // Devuelve el usuario actualizado
         } else {
-            console.warn(`⚠️ No se encontró el usuario ${employeeNo} para actualizar.`);
-            return null;
+            console.warn(`[Modelo] ⚠️ No se encontró el usuario ${employeeNo} para actualizar estado en BD.`);
+            throw new Error('Usuario no encontrado para actualizar estado.');
         }
     } catch (error) {
-        console.error(`Error al actualizar estado del usuario ${employeeNo}:`, error.message);
-        return null;
+        console.error(`[Modelo] Error al actualizar estado BD del usuario ${employeeNo}:`, error);
+        throw error; // Propaga el error
     }
 };
 
@@ -491,6 +528,29 @@ const searchCardByCardNo = async (cardNo) => {
 };
 
 
+/**
+ * Obtiene todos los usuarios activos que tienen un número de teléfono registrado.
+ * @returns {Promise<Array>} Un array de objetos, cada uno con el nombre y el número de teléfono del usuario.
+ */
+const getAllActiveUsersWithPhone = async () => {
+  try {
+    // CORRECCIÓN: Usar el 'client' importado directamente.
+    const query = `
+      SELECT name, phone_number 
+      FROM users 
+      WHERE active = true AND phone_number IS NOT NULL AND phone_number <> ''
+    `;
+    const result = await client.query(query);
+    return result.rows;
+  } catch (error) {
+    console.error('Error en el modelo al obtener usuarios con teléfono:', error);
+    throw error;
+  }
+};
+
+
+
+
 
 module.exports = {
     createUser,
@@ -508,4 +568,9 @@ module.exports = {
     restartUserDailyAccess,
     getUserDailyAccessCount,
     decrementUserDailyAccess,
+    getAllActiveUsersWithPhone, // <-- LA LÍNEA MÁS IMPORTANTE
+    saveDbImage,
+    getNoteByEmployeeNo,
+    upsertNote
+
 };

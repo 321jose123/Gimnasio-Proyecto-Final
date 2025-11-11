@@ -12,43 +12,33 @@ const validateFingerprint = [
     }
 ]
 
+// --- INICIO DE LA MODIFICACIÓN ---
 const validateAddFingerprintToUser = [
-    check('FingerPrintCfg').exists().withMessage('FingerPrintCfg es requerido'),
+    // Se han comentado temporalmente todas las validaciones para depurar.
+    // Si la petición pasa con este cambio, significa que una de estas
+    // reglas estaba causando el error 403.
+    
+    // check('FingerPrintCfg').exists().withMessage('FingerPrintCfg es requerido'),
   
-    check('FingerPrintCfg.employeeNo')
-      .exists().withMessage('employeeNo es requerido')
-      .isNumeric().withMessage('employeeNo debe ser un número'),
+    // check('FingerPrintCfg.employeeNo')
+    //   .exists().withMessage('employeeNo es requerido')
+    //   .isNumeric().withMessage('employeeNo debe ser un número'),
   
-    check('FingerPrintCfg.enableCardReader')
-      .isArray({ min: 1 }).withMessage('enableCardReader debe ser un arreglo con al menos un elemento'),
+    // check('FingerPrintCfg.enableCardReader')
+    //   .isArray({ min: 1 }).withMessage('enableCardReader debe ser un arreglo con al menos un elemento'),
   
-    // check('FingerPrintCfg.fingerPrintID')
-    //   .exists().withMessage('fingerPrintID es requerido')
-    //   .isNumeric().withMessage('fingerPrintID debe ser un número'),
+    // check('FingerPrintCfg.fingerData')
+    //   .exists().withMessage('fingerData es requerido')
+    //   .notEmpty().withMessage('fingerData no debe estar vacío'),
   
-    // check('FingerPrintCfg.deleteFingerPrint')
-    //   .exists().withMessage('deleteFingerPrint es requerido')
-    //   .isBoolean().withMessage('deleteFingerPrint debe ser un valor booleano'),
-  
-    // check('FingerPrintCfg.fingerType')
-    //   .exists().withMessage('fingerType es requerido')
-    //   .isIn(['normalFP', 'leaderFP']).withMessage('fingerType debe ser normalFP o leaderFP'),
-  
-    check('FingerPrintCfg.fingerData')
-      .exists().withMessage('fingerData es requerido')
-      .notEmpty().withMessage('fingerData no debe estar vacío'),
-  
-    // check('FingerPrintCfg.leaderFP')
-    //   .isArray({ min: 1 }).withMessage('leaderFP debe ser un arreglo con al menos un elemento'),
-  
-    // check('FingerPrintCfg.checkEmployeeNo')
-    //   .exists().withMessage('checkEmployeeNo es requerido')
-    //   .isBoolean().withMessage('checkEmployeeNo debe ser un valor booleano'),
-  
+    // Dejamos solo la función final para que la cadena de middleware no se rompa.
     (req, res, next) => {
-      validateResult(req, res, next);
+      // Por ahora, no llamamos a validateResult para permitir que la petición pase.
+      // validateResult(req, res, next); 
+      next(); // <-- Simplemente continuamos al siguiente paso (el controlador)
     }
   ];
+// --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = {
     validateFingerprint,

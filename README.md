@@ -22,15 +22,15 @@ Este proyecto es un backend diseñado como software de terceros para la gestión
 
 4. Configurar la base de datos PostgreSQL:
    Asegúrate de tener un servidor PostgreSQL en funcionamiento y una base de datos creada para este proyecto.
-   Edita el archivo config.js con la información de conexión a tu base de datos PostgreSQL en la sección //TODO: CONEXIÓN CON DATABASE CONFIG:
+   Edita el archivo config.js con la información de conexión a tu base de datos PostgreSQL.
    ```bash
      //TODO: CONEXIÓN CON DATABASE CONFIG
     module.exports = {
-      db_host: '192.168.1.xxx', // Reemplaza con la dirección IP o hostname de tu servidor PostgreSQL
-      db_port: 5432,             // Puerto por defecto de PostgreSQL
-      db_user: 'postgres',       // Reemplaza con el nombre de usuario de tu base de datos
-      db_password: 'xxxx',       // Reemplaza con la contraseña de tu base de datos
-      db_database: 'DB_xxx'      // Reemplaza con el nombre de la base de datos que creaste
+      db_host: '192.168.1.xxx',
+      db_port: 5432,
+      db_user: 'postgres',
+      db_password: 'xxxx',
+      db_database: 'DB_xxx'
     };
    ```
 5. Configurar las variables de entorno en el archivo .env:
@@ -39,7 +39,7 @@ Este proyecto es un backend diseñado como software de terceros para la gestión
    ```bash
     API_USERNAME=admin           # Nombre de usuario para acceder a la API del dispositivo Hikvision
     API_PASSWORD=xxxxx         # Contraseña para acceder a la API del dispositivo Hikvision
-    BASE_URL=http://192.168.1.xxx # URL base de la API del dispositivo Hikvision (reemplaza con la dirección IP de tu dispositivo)
+    BASE_URL=http://192.168.1.xxx # URL base de la API del dispositivo Hikvision
     SYNC_KEY=true              # Clave de sincronización (actualmente un booleano)
    ```
 
@@ -50,7 +50,3 @@ Para iniciar la aplicación en modo de desarrollo, utiliza el siguiente comando:
 ```bash
  npm start
 ```
-
-## Autor
-
-Kevin Santiago .S .O
