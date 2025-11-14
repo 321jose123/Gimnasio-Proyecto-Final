@@ -64,22 +64,45 @@ const getUsersWithTwoDailyAccessesForActivation = async () => {
 
 
 
-const getAllUsers = async (page = 1, pageSize = 10) => {
+const getAllUsers = async (page = 1, pageSize = 10, search = '') => {
 
     const offset = (page - 1) * pageSize;
 
+    let baseQuery = 'FROM users';
+    let whereClause = '';
+    const values = []; // Para la consulta principal
+    const totalValues = []; // Para la consulta de conteo
+
+    // Si hay un término de búsqueda, lo añadimos
+    if (search) {
+        // $1 será el término de búsqueda
+        // Usamos ILIKE para búsqueda no sensible a mayúsculas
+        // Casteamos employee_no a TEXT para poder usar ILIKE
+        whereClause = 'WHERE (name ILIKE $1 OR CAST(employee_no AS TEXT) ILIKE $1)';
+        const searchTerm = `%${search}%`;
+        values.push(searchTerm);
+        totalValues.push(searchTerm);
+    }
+
+    // Construimos la consulta principal
+    // Los índices de $ continúan desde 'values'
     const query = `
-        SELECT * FROM users
+        SELECT * ${baseQuery}
+        ${whereClause}
         ORDER BY employee_no
-        LIMIT $1 OFFSET $2
+        LIMIT $${values.length + 1} OFFSET $${values.length + 2}
     `;
-    const values = [pageSize, offset];
+    // Añadimos los valores de paginación
+    values.push(pageSize, offset);
+
+    // Construimos la consulta de conteo total
+    const totalQuery = `SELECT COUNT(*) ${baseQuery} ${whereClause}`;
 
     try {
+        // Ejecutamos ambas consultas
         const result = await client.query(query, values);
-
-        const totalQuery = 'SELECT COUNT(*) FROM users';
-        const totalResult = await client.query(totalQuery);
+        const totalResult = await client.query(totalQuery, totalValues);
+        
         const totalUsers = totalResult.rows[0].count;
 
         return {
@@ -91,6 +114,7 @@ const getAllUsers = async (page = 1, pageSize = 10) => {
         throw new Error('Error al obtener los usuarios, ', error);
     }
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 /**
  * Guardar imagen del rostro
@@ -132,26 +156,35 @@ const createUser = async (userInfo) => {
     const sanitizedGroupID = groupID ? parseInt(groupID) : null;
 
     try {
-        // --- Verificaciones existentes (sin cambios) ---
-        const checkEmailQuery = `
-            SELECT EXISTS (
-                SELECT 1 FROM users WHERE email = $1
-            );
-        `;
-        const emailExists = await client.query(checkEmailQuery, [email]);
-        if (emailExists.rows[0].exists) {
-            throw new Error('El correo electrónico ya está registrado.');
+        
+        // --- ¡MODIFICACIÓN AQUÍ! ---
+        // Solo validamos el email si NO es un string vacío o nulo
+        if (email) { 
+            const checkEmailQuery = `
+                SELECT EXISTS (
+                    SELECT 1 FROM users WHERE email = $1
+                );
+            `;
+            const emailExists = await client.query(checkEmailQuery, [email]);
+            if (emailExists.rows[0].exists) {
+                throw new Error('El correo electrónico ya está registrado.');
+            }
         }
 
-        const checkPhoneQuery = `
-            SELECT EXISTS (
-                SELECT 1 FROM users WHERE phone_number = $1
-            );
-        `;
-        const phoneExists = await client.query(checkPhoneQuery, [phoneNumber]);
-        if (phoneExists.rows[0].exists) {
-            throw new Error('El número de teléfono ya está registrado.');
+        // --- ¡MODIFICACIÓN AQUÍ! ---
+        // Solo validamos el teléfono si NO es un string vacío o nulo
+        if (phoneNumber) {
+            const checkPhoneQuery = `
+                SELECT EXISTS (
+                    SELECT 1 FROM users WHERE phone_number = $1
+                );
+            `;
+            const phoneExists = await client.query(checkPhoneQuery, [phoneNumber]);
+            if (phoneExists.rows[0].exists) {
+                throw new Error('El número de teléfono ya está registrado.');
+            }
         }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const doorNo = RightPlan && RightPlan[0] ? RightPlan[0].doorNo : null;
         const planTemplateNo = RightPlan && RightPlan[0] ? RightPlan[0].planTemplateNo : null;
@@ -212,31 +245,56 @@ const updateUser = async (userData) => {
     } = userData;
 
     try {
-        // Verificar si ya existe un usuario con el mismo email o teléfono
-        const checkExistsQuery = `
-        SELECT EXISTS (
-          SELECT 1 FROM users WHERE
-            ($1 = email OR $2 = phone_number) AND
-            employee_no != $3
-        );
-      `;
-        const exists = await client.query(checkExistsQuery, [email, phoneNumber, employeeNo]);
-        if (exists.rows[0].exists) {
-            return {
-                error: true,
-                status: 400,
-                message: 'El correo electrónico o número de teléfono ya están registrados.'
-            };
+        
+        // --- ¡MODIFICACIÓN AQUÍ! ---
+        // Dividimos la validación en dos partes
+        
+        // 1. Validar Email (solo si se proporciona)
+        if (email) {
+            const checkEmailQuery = `
+                SELECT EXISTS (
+                    SELECT 1 FROM users WHERE email = $1 AND employee_no != $2
+                );
+            `;
+            const emailExists = await client.query(checkEmailQuery, [email, employeeNo]);
+            if (emailExists.rows[0].exists) {
+                return {
+                    error: true,
+                    status: 400,
+                    message: 'El correo electrónico ya está registrado.'
+                };
+            }
         }
 
+        // 2. Validar Teléfono (solo si se proporciona)
+        if (phoneNumber) {
+            const checkPhoneQuery = `
+                SELECT EXISTS (
+                    SELECT 1 FROM users WHERE phone_number = $1 AND employee_no != $2
+                );
+            `;
+            const phoneExists = await client.query(checkPhoneQuery, [phoneNumber, employeeNo]);
+            if (phoneExists.rows[0].exists) {
+                return {
+                    error: true,
+                    status: 400,
+                    message: 'El número de teléfono ya está registrado.'
+                };
+            }
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+
         const checkGroupIDExist = `
-        SELECT EXISTS (
-            SELECT 1 FROM groups WHERE id = $1
-        );
-    `;
-        const groupIDExists = await client.query(checkGroupIDExist, [groupID]);
-        if (!groupIDExists.rows[0].exists) {
-            throw new Error('El grupo no existe.');
+            SELECT EXISTS (
+                SELECT 1 FROM groups WHERE id = $1
+            );
+        `;
+        // Modificación: Solo chequear si groupID no es nulo o indefinido
+        if (groupID) { 
+            const groupIDExists = await client.query(checkGroupIDExist, [groupID]);
+            if (!groupIDExists.rows[0].exists) {
+                throw new Error('El grupo no existe.');
+            }
         }
 
         // Actualizar el usuario en la base de datos
@@ -297,9 +355,6 @@ const updateUser = async (userData) => {
         };
     }
 };
-
-
-
 
 /**
  * Obtiene la nota de un usuario específico.

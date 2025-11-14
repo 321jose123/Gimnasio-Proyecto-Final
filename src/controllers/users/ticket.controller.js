@@ -1,3 +1,5 @@
+// src/controllers/users/ticket.controller.js
+
 const TicketModel = require('../../models/users/ticket.model');
 const { apiService } = require('../../services/apiServices');
 const { logNewUserRegistration } = require('../informes/informe.controller'); // Ajusta esta ruta si es necesario
@@ -100,15 +102,24 @@ const sellTicket = async (req, res) => {
 /**
  * Lista todos los usuarios de la tabla ticket_user.
  */
+// --- MODIFICACIÓN CLAVE AQUÍ ---
 const listAllTicketUsers = async (req, res) => {
-    const { page = 1, pageSize = 100 } = req.query;
     try {
-        const data = await TicketModel.getAllTicketUsers(page, pageSize);
+        // 1. Leemos 'page', 'limit' (en lugar de pageSize) y el nuevo 'search'
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10; // Corregido a 'limit'
+        const search = req.query.search || ''; // <-- ¡Añadido!
+
+        // 2. Pasamos todos los parámetros al modelo
+        const data = await TicketModel.getAllTicketUsers(page, limit, search);
+        
         res.status(200).json({ success: true, data });
+
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error al listar usuarios de tiquetera.', error: error.message });
     }
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 /**
  * Elimina un usuario de la tabla ticket_user.

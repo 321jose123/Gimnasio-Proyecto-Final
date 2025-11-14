@@ -1,3 +1,5 @@
+// src/models/users/ticket.model.js
+
 const { client } = require('../../db/databasepg'); // ¡Asegúrate de que esta ruta sea la correcta!
 
 /**
@@ -78,17 +80,49 @@ const sellTicket = async (ticketData) => {
 /**
  * Obtiene todos los usuarios de la tabla ticket_user con paginación.
  */
-const getAllTicketUsers = async (page = 1, pageSize = 100) => {
+// --- MODIFICACIÓN CLAVE AQUÍ ---
+const getAllTicketUsers = async (page = 1, pageSize = 10, search = '') => {
     const offset = (page - 1) * pageSize;
-    try {
-        const resultQuery = 'SELECT * FROM ticket_user ORDER BY name LIMIT $1 OFFSET $2';
-        const totalQuery = 'SELECT COUNT(*) FROM ticket_user';
 
-        const result = await client.query(resultQuery, [pageSize, offset]);
-        const totalResult = await client.query(totalQuery);
+    let baseQuery = 'FROM ticket_user';
+    let whereClause = '';
+    const values = []; // Para la consulta principal
+    const totalValues = []; // Para la consulta de conteo
+
+    // Si hay un término de búsqueda, lo añadimos
+    if (search) {
+        // $1 será el término de búsqueda
+        // Usamos ILIKE para búsqueda no sensible a mayúsculas
+        // Casteamos employee_no a TEXT para poder usar ILIKE
+        whereClause = 'WHERE (name ILIKE $1 OR CAST(employee_no AS TEXT) ILIKE $1)';
+        const searchTerm = `%${search}%`;
+        values.push(searchTerm);
+        totalValues.push(searchTerm);
+    }
+
+    // Construimos la consulta principal
+    // Los índices de $ continúan desde 'values'
+    const resultQuery = `
+        SELECT * ${baseQuery}
+        ${whereClause}
+        ORDER BY name
+        LIMIT $${values.length + 1} OFFSET $${values.length + 2}
+    `;
+    // Añadimos los valores de paginación
+    values.push(pageSize, offset);
+
+    // Construimos la consulta de conteo total
+    const totalQuery = `SELECT COUNT(*) ${baseQuery} ${whereClause}`;
+
+    try {
+        // Ejecutamos ambas consultas
+        const result = await client.query(resultQuery, values);
+        const totalResult = await client.query(totalQuery, totalValues);
         
+        const totalUsers = totalResult.rows[0].count;
+
         return {
-            totalUsers: totalResult.rows[0].count,
+            totalUsers: totalUsers,
             users: result.rows,
         };
     } catch (error) {
@@ -96,6 +130,7 @@ const getAllTicketUsers = async (page = 1, pageSize = 100) => {
         throw new Error('Error al obtener los usuarios de tiquetera');
     }
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 /**
  * Elimina un usuario de la tabla ticket_user por su employeeNo.

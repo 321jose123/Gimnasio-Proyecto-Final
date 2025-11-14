@@ -1,10 +1,9 @@
-// --- FILE: src/index.js ---
-
 require('dotenv').config(); // <-- ESENCIAL: siempre al inicio
 
 const express = require('express');
 const cors = require('cors');
 const os = require('os');
+const path = require('path'); // <-- REQUERIDO PARA path.join
 const { connectDB } = require('./db/databasepg');
 
 // --- IMPORTACIONES ---
@@ -44,6 +43,23 @@ startEventScheduler();
 // Registrar rutas principales
 app.use('/api', mainRouter);
 
+// --- SERVIR EL FRONTEND ---
+// Sirve la aplicación de frontend (React) desde la carpeta 'build'
+// Esta es la línea corregida según tu estructura de carpetas:
+app.use(express.static(path.join(__dirname, "../build")));
+
+// Nota: Si usas React Router, necesitarás un "catch-all" adicional
+// para manejar las rutas del lado del cliente:
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+  } else {
+    // Si es una ruta /api no encontrada, envía un 404
+    res.status(404).send('Ruta API no encontrada');
+  }
+});
+
+
 // --- OBTENER IP LOCAL (para mostrar enlace LAN) ---
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
@@ -61,6 +77,6 @@ function getLocalIP() {
 app.listen(port, '0.0.0.0', () => {
   const localIP = getLocalIP();
   console.info(`✅ Servidor escuchando en el puerto ${port}`);
-  console.info(`💻 Accede localmente:   http://localhost:${port}`);
+  console.info(`💻 Accede localmente:    http://localhost:${port}`);
   console.info(`📡 Accede desde la red: http://${localIP}:${port}`);
 });

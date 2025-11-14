@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 const { apiService, apiServiceImage } = require('../../services/apiServices');
-const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE,API_URL_REMOTE_DOOR_OPEN } = require('../../../config');
+const { API_URL_INFORMACION_CONFIGURACION_USUARIO, API_URL_DELETE_USER, API_URL_ADD_USER, API_URL_SEARCH_USER, API_URL_UPDATE_USER_PROFILE_IMAGE,API_URL_REMOTE_DOOR_OPEN, API_URL_STREAMING } = require('../../../config');
 const { validateDateRange } = require('../../helpers/validate.helpers');
 const UserModel = require('../../models/users/users.models');
 const { handleError } = require('../../services/errors/handleErrors');
@@ -21,6 +21,12 @@ const { insertEvent } = require('../../models/events/events.models');
 const { searchUser } = require('./searchUser');
 const { listAllUsers } = require('./listAllUsers');
 const { searchGroupModel } = require('../../models/groups/searchGroup/searchGroup.model');
+
+
+// --- ¡ESTAS SON LAS LÍNEAS QUE FALTABAN! ---
+const axios = require('axios');
+// (Asegúrate que la ruta a 'digestAuth' sea correcta según tu proyecto, basado en tu doc es 'utils/digestAuth')
+const generateDigestAuthHeader = require('../../utils/digestAuth');
 
 /**
  * Obtiene las capacidades del usuario desde el dispositivo.
@@ -669,6 +675,67 @@ const ingresoDiario = async (req, res) => {
         res.status(500).json({ success: false, message: 'Error interno del servidor.', error: error.message });
     }
 };
+
+// --- 3. ¡NUEVA FUNCIÓN AÑADIDA! ---
+/**
+ * Obtiene un snapshot (foto) de la cámara del dispositivo.
+ */
+const getDeviceSnapshot = async (req, res) => {
+    
+    let firstError = null;
+    
+    // Intenta obtener la autenticación inicial (necesaria para el 'nonce')
+    try {
+        await axios.get(API_URL_STREAMING, { responseType: 'arraybuffer' });
+    } catch (error) {
+        if (error.response && error.response.status === 401) {
+            firstError = error; // Guardamos el error 401
+        } else {
+             console.error('Error (no 401) en la petición inicial de snapshot:', error.message);
+             return res.status(500).json({ success: false, message: 'Error de red con el dispositivo.' });
+        }
+    }
+
+    if (!firstError) {
+         console.error('Error de autenticación: No se recibió la respuesta 401 esperada del dispositivo.');
+         return res.status(500).json({ success: false, message: 'Error de autenticación (no 401).' });
+    }
+    
+    // --- Autenticación Digest ---
+    try {
+        console.log(`[Snapshot] Solicitando imagen de ${API_URL_STREAMING}`);
+        
+        const wwwAuthenticateHeader = firstError.response.headers['www-authenticate'];
+        const digestHeader = generateDigestAuthHeader(
+            'GET',
+            API_URL_STREAMING,
+            API_USERNAME,
+            API_PASSWORD,
+            wwwAuthenticateHeader
+        );
+
+        const response = await axios.get(API_URL_STREAMING, {
+            headers: { 'Authorization': digestHeader },
+            responseType: 'arraybuffer' // ¡Crucial para imágenes!
+        });
+
+        // Enviamos la imagen cruda (buffer) al frontend
+        res.set('Content-Type', 'image/jpeg');
+        res.send(response.data);
+        
+    } catch (error) {
+        console.error('Error al obtener snapshot del dispositivo:', error.message);
+        if (error.response) {
+             console.error('Respuesta de error del dispositivo:', error.response.status, error.response.statusText);
+        }
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener snapshot',
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
   getUserCapabilities,
   deleteUser,
@@ -682,6 +749,7 @@ module.exports = {
   getUserImageAsJPEG,
   updateUserAccessesService,
   saveUserDbImage,
-  ingresoDiario // <-- ¡Añadida aquí!
+  ingresoDiario,
+  getDeviceSnapshot // <-- ¡Añadida aquí!
 };
 
