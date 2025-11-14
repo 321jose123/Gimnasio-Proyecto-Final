@@ -1,32 +1,89 @@
 const express = require('express');
 const router = express.Router();
 
-// Tus rutas existentes
-const userRoutes = require('./userRoutes/userRoutes');
-const streamingRoutes = require('./streamingRoutes/streamingRoutes');
-const fingerRoutes = require('./fingerPrintRoutes/fingerPrintRoutes');
-const cardRoutes = require('./cardRoutes/cardRoutes');
-const eventsRoutes = require('./systemEvents/systemEvents');
-const groupsRoutes = require('./groupRoutes/groupRoutes');
-const socialEventRoutes = require('./socialEvent.routes'); // <-- 1. Importar las nuevas rutas
+// --- CONTROLADORES DE USUARIO ---
+const { 
+    getUserCapabilities, 
+    addUserInfo, 
+    deleteUser, 
+    searchUser, 
+    updateUserFace, 
+    getUserImageAsJPEG, 
+    deleteUserImage, 
+    updateUserStatus, 
+    updateUserAccessesService, 
+    updateUserInfo, 
+    listAllUsers,
+    saveUserDbImage,
+    ingresoDiario,
+    getDeviceSnapshot // <-- 1. Importa la nueva función
+} = require('../../controllers/users/user.controller');
+
+// --- CONTROLADOR DE NOTAS ---
+const {
+    getUserNote,
+    createUserNote,
+    updateUserNote
+} = require('../../controllers/users/notes.controller');
+
+// --- CONTROLADOR DE TIQUETES (CON TODAS LAS FUNCIONES) ---
+const { 
+    sellTicket, 
+    listAllTicketUsers, 
+    deleteTicketUser,
+    getTicketUser,
+    updateTicketUser,
+    saveTicketUserFace,
+    getAllTicketAccessEvents  // 👈 importar la nueva función
+
+} = require('../../controllers/users/ticket.controller');
+
+// --- CONTROLADOR DE ACCESOS ---
+const { recordAccess } = require('../../controllers/users/access.controller');
+const { API_URL_REMOTE_DOOR_OPEN } = require('../../../config');
+
+// --- CONTROLADOR DE INFORMES (AÑADIDO) ---
+const { 
+    getInformes 
+} = require('../../controllers/informes/informe.controller'); // Ajusta la ruta
 
 
-// --- 1. IMPORTAR LAS NUEVAS RUTAS DE WHATSAPP ---
-const whatsappRoutes = require('./whatsappRoutes');
+// --- RUTAS PRINCIPALES DE USUARIO ---
+router.get('/capabilities', getUserCapabilities);
+router.post('/add', addUserInfo);
+router.put('/update-user-access', updateUserStatus);
+router.put('/delete', deleteUser);
+router.post('/search', searchUser);
+router.post('/update-face', updateUserFace);
+router.put('/delete-face', deleteUserImage);
+router.get('/profile-image', getUserImageAsJPEG);
+router.put('/update-accesses', updateUserAccessesService);
+router.post('/update-user-info', updateUserInfo);
+router.get('/listUsers', listAllUsers);
+router.post('/save-db-image', saveUserDbImage);
 
-// Registro de rutas existentes
-router.use('/user', userRoutes);
-router.use('/fingerprint', fingerRoutes );
-router.use('/card', cardRoutes);
-router.use('/streaming', streamingRoutes);
-router.use('/events', eventsRoutes);
-router.use('/groups', groupsRoutes);
+// --- RUTAS PARA GESTIONAR NOTAS ---
+router.get('/notes/:employeeNo', getUserNote);
+router.post('/notes', createUserNote);
+router.put('/notes/:employeeNo', updateUserNote);
 
-// --- 2. REGISTRAR LAS NUEVAS RUTAS DE WHATSAPP ---
-// Esto le dice a tu aplicación que cualquier petición a /api/whatsapp/...
-// debe ser manejada por el router de WhatsApp.
-router.use('/whatsapp', whatsappRoutes);
-router.use('/social-events', socialEventRoutes); // <-- 2. Registrar las nuevas rutas
+// --- RUTAS PARA TIQUETERA Y ACCESOS ---
+router.post('/sell-ticket', sellTicket);
+router.get('/list-ticket-users', listAllTicketUsers);
+router.put('/delete-ticket-user', deleteTicketUser);
+router.get('/ticket-user/:employeeNo', getTicketUser);
+router.put('/ticket-user/:employeeNo', updateTicketUser);
+router.post('/record-access', recordAccess);
+router.post('/ticket-user/save-face', saveTicketUserFace);
+router.post('/ticketEvents/all', getAllTicketAccessEvents);
 
+// --- RUTA DE INFORMES (AÑADIDA) ---
+router.get('/informes', getInformes);
+router.post('/ingreso-diario', ingresoDiario); // <-- 2. Añade la nueva ruta
+
+
+//----Captura de rostro con el dispositivo
+
+router.get('/device-snapshot', getDeviceSnapshot);
 
 module.exports = router;
